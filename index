@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Calculadora de Volcado</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --accent: #f97316;
+      --accent-hover: #ea580c;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --green: #10b981;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+      min-height: 100vh;
+    }
+    .container {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+    }
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--accent);
+    }
+    .form-group {
+      margin-bottom: 14px;
+    }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus {
+      border-color: var(--accent);
+    }
+    .results {
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .res-card {
+      background: #0f172a;
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .res-card.full-width {
+      grid-column: span 2;
+    }
+    .res-card.highlight {
+      border-color: var(--green);
+    }
+    .res-title {
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+    .res-value {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .res-unit {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: normal;
+    }
+    .res-highlight {
+      color: var(--green);
+    }
+    .error-msg {
+      color: #ef4444;
+      font-size: 0.85rem;
+      text-align: center;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Calculadora de Volcado</h1>
+
+    <div class="form-group">
+      <label for="bines">Bines volcados</label>
+      <input type="number" id="bines" min="0" placeholder="Ej: 24" inputmode="numeric">
+    </div>
+
+    <div class="grid-2 form-group">
+      <div>
+        <label for="horaInicio">Hora inicial</label>
+        <input type="time" id="horaInicio">
+      </div>
+      <div>
+        <label for="horaFin">Hora final</label>
+        <input type="time" id="horaFin">
+      </div>
+    </div>
+
+    <div class="grid-2 form-group">
+      <div>
+        <label for="pausas">Pausas (min)</label>
+        <input type="number" id="pausas" value="0" min="0" inputmode="numeric">
+      </div>
+      <div>
+        <label for="pesoBin">Peso bin (kg)</label>
+        <input type="number" id="pesoBin" value="330" min="1" inputmode="numeric">
+      </div>
+    </div>
+
+    <div id="error" class="error-msg">La hora final debe ser posterior a la inicial.</div>
+
+    <div class="results">
+      <div class="res-card highlight">
+        <div class="res-title">Ritmo Neto (sin pausas)</div>
+        <div class="res-value res-highlight" id="ritmoNeto">0.0 <span class="res-unit">bin/h</span></div>
+      </div>
+
+      <div class="res-card">
+        <div class="res-title">Ritmo Bruto (con pausas)</div>
+        <div class="res-value" id="ritmoBruto">0.0 <span class="res-unit">bin/h</span></div>
+      </div>
+
+      <div class="res-card">
+        <div class="res-title">Tiempo Neto de Línea</div>
+        <div class="res-value" id="tiempoNeto">0h 0m</div>
+      </div>
+
+      <div class="res-card">
+        <div class="res-title">Kilos Totales</div>
+        <div class="res-value" id="totalKg">0 <span class="res-unit">kg</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const inputs = ['bines', 'horaInicio', 'horaFin', 'pausas', 'pesoBin'];
+    inputs.forEach(id => document.getElementById(id).addEventListener('input', calcular));
+
+    function calcular() {
+      const bines = parseFloat(document.getElementById('bines').value) || 0;
+      const horaInicio = document.getElementById('horaInicio').value;
+      const horaFin = document.getElementById('horaFin').value;
+      const pausas = parseFloat(document.getElementById('pausas').value) || 0;
+      const pesoBin = parseFloat(document.getElementById('pesoBin').value) || 0;
+      const errorDiv = document.getElementById('error');
+
+      if (!horaInicio || !horaFin) {
+        limpiarResultados();
+        errorDiv.style.display = 'none';
+        return;
+      }
+
+      const [hIni, mIni] = horaInicio.split(':').map(Number);
+      const [hFin, mFin] = horaFin.split(':').map(Number);
+
+      const minInicio = hIni * 60 + mIni;
+      let minFin = hFin * 60 + mFin;
+
+      if (minFin < minInicio) {
+        minFin += 24 * 60; // Permite turnos que cruzan la medianoche
+      }
+
+      const tiempoBrutoMin = minFin - minInicio;
+      const tiempoNetoMin = tiempoBrutoMin - pausas;
+
+      if (tiempoNetoMin <= 0) {
+        errorDiv.textContent = 'Las pausas superan o igualan el tiempo total transcurrido.';
+        errorDiv.style.display = 'block';
+        limpiarResultados();
+        return;
+      }
+      errorDiv.style.display = 'none';
+
+      // Horas decimales
+      const horasBrutas = tiempoBrutoMin / 60;
+      const horasNetas = tiempoNetoMin / 60;
+
+      // Ritmos
+      const ritmoConPausas = (bines / horasBrutas).toFixed(1);
+      const ritmoSinPausas = (bines / horasNetas).toFixed(1);
+
+      // Kilos
+      const kilos = Math.round(bines * pesoBin);
+
+      // Formateo de tiempo neto en horas y minutos
+      const netHorasDisplay = Math.floor(tiempoNetoMin / 60);
+      const netMinDisplay = Math.round(tiempoNetoMin % 60);
+
+      document.getElementById('ritmoNeto').innerHTML = `${ritmoSinPausas} <span class="res-unit">bin/h</span>`;
+      document.getElementById('ritmoBruto').innerHTML = `${ritmoConPausas} <span class="res-unit">bin/h</span>`;
+      document.getElementById('tiempoNeto').textContent = `${netHorasDisplay}h ${netMinDisplay}m`;
+      document.getElementById('totalKg').innerHTML = `${kilos.toLocaleString()} <span class="res-unit">kg</span>`;
+    }
+
+    function limpiarResultados() {
+      document.getElementById('ritmoNeto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
+      document.getElementById('ritmoBruto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
+      document.getElementById('tiempoNeto').textContent = `0h 0m`;
+      document.getElementById('totalKg').innerHTML = `0 <span class="res-unit">kg</span>`;
+    }
+  </script>
+</body>
+</html>
