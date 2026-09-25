@@ -10,7 +10,6 @@
       --card: #ffffff;
       --orange: #f37324;
       --green-dark: #2d5738;
-      --green-light: #8cb83e;
       --text: #1e293b;
       --muted: #64748b;
       --border: #e2e8f0;
@@ -72,12 +71,27 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
+    .label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
     label {
       display: block;
       font-size: 0.82rem;
       font-weight: 600;
       color: var(--green-dark);
-      margin-bottom: 6px;
+    }
+    .btn-now {
+      background: none;
+      border: none;
+      color: var(--orange);
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 0 2px;
+      text-decoration: underline;
     }
     input {
       width: 100%;
@@ -148,7 +162,6 @@
 
   <div class="container">
     <div class="brand-header">
-      <!-- Se carga la imagen que subas con el nombre logo.jpg -->
       <img src="logo.jpg" alt="Logo El Paruco" class="brand-logo" onerror="this.style.display='none'">
       <h1>Control de Volcado</h1>
       <div class="subtitle">El Paruco</div>
@@ -165,7 +178,10 @@
         <input type="time" id="horaInicio">
       </div>
       <div>
-        <label for="horaFin">Hora final</label>
+        <div class="label-row">
+          <label for="horaFin">Hora final</label>
+          <button type="button" class="btn-now" id="btnSetNow">Poner ahora</button>
+        </div>
         <input type="time" id="horaFin">
       </div>
     </div>
@@ -193,6 +209,21 @@
   <script>
     const inputs = ['bines', 'horaInicio', 'horaFin', 'pausas'];
     inputs.forEach(id => document.getElementById(id).addEventListener('input', calcular));
+
+    // Función para obtener la hora actual en formato HH:MM
+    function setHoraActual() {
+      const ahora = new Date();
+      const horas = String(ahora.getHours()).padStart(2, '0');
+      const minutos = String(ahora.getMinutes()).padStart(2, '0');
+      document.getElementById('horaFin').value = `${horas}:${minutos}`;
+      calcular();
+    }
+
+    // Establece la hora al cargar la página
+    setHoraActual();
+
+    // Permite actualizarla tocando "Poner ahora"
+    document.getElementById('btnSetNow').addEventListener('click', setHoraActual);
 
     function calcular() {
       const bines = parseFloat(document.getElementById('bines').value) || 0;
