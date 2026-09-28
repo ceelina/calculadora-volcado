@@ -13,6 +13,8 @@
       --text: #1e293b;
       --muted: #64748b;
       --border: #e2e8f0;
+      --green-ok: #15803d;
+      --red-alert: #b91c1c;
     }
     * {
       box-sizing: border-box;
@@ -133,6 +135,10 @@
     .res-card.full-width {
       grid-column: span 2;
     }
+    .res-card.target-box {
+      background: #fff7ed;
+      border-color: #fed7aa;
+    }
     .res-title {
       font-size: 0.7rem;
       color: var(--muted);
@@ -171,18 +177,33 @@
       <div class="subtitle">El Paruco</div>
     </div>
 
-    <!-- SECCIÓN 1: TIEMPOS Y RITMO -->
-    <div class="section-title">⏱️ Ritmo de Volcado</div>
-    
+    <!-- SECCIÓN 1: RITMO Y VELOCIDAD OBJETIVO -->
+    <div class="section-title">🎯 Velocidad Objetivo y Cadencia</div>
+
     <div class="grid-2 form-group">
       <div>
-        <label for="bines">Bines volcados</label>
-        <input type="number" id="bines" min="0" placeholder="Ej: 30" inputmode="numeric">
+        <label for="ritmoObjetivo">Velocidad objetivo</label>
+        <input type="number" id="ritmoObjetivo" placeholder="Ej: 20" value="20" min="1" inputmode="numeric">
       </div>
       <div>
         <label for="pesoBin">Peso bin (kg)</label>
         <input type="number" id="pesoBin" value="330" inputmode="numeric">
       </div>
+    </div>
+
+    <div class="results" style="margin-top: 6px; margin-bottom: 12px;">
+      <div class="res-card target-box full-width">
+        <div class="res-title">Para cumplir el objetivo hay que volcar:</div>
+        <div class="res-value res-highlight" id="cadenciaObjetivo">1 bin cada 3m 00s</div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: REGISTRO DE VOLCADO REAL -->
+    <div class="section-title">⏱️ Ritmo Real Registrado</div>
+
+    <div class="form-group">
+      <label for="bines">Bines volcados</label>
+      <input type="number" id="bines" min="0" placeholder="Ej: 30" inputmode="numeric">
     </div>
 
     <div class="grid-2 form-group">
@@ -208,22 +229,17 @@
 
     <div class="results">
       <div class="res-card highlight">
-        <div class="res-title">Sin pausas (neto)</div>
+        <div class="res-title">Sin pausas (neto real)</div>
         <div class="res-value res-highlight" id="ritmoNeto">0.0 <span class="res-unit">bin/h</span></div>
       </div>
 
       <div class="res-card">
-        <div class="res-title">Con pausas (bruto)</div>
+        <div class="res-title">Con pausas (bruto real)</div>
         <div class="res-value" id="ritmoBruto">0.0 <span class="res-unit">bin/h</span></div>
-      </div>
-
-      <div class="res-card full-width">
-        <div class="res-title">Cadencia de volcado (neto)</div>
-        <div class="res-value res-highlight" id="cadenciaDisplay">-- <span class="res-unit">por bin</span></div>
       </div>
     </div>
 
-    <!-- SECCIÓN 2: PLANIFICACIÓN Y PROYECCIÓN -->
+    <!-- SECCIÓN 3: PLANIFICACIÓN Y PROYECCIÓN -->
     <div class="section-title">📈 Planificación y Proyección</div>
 
     <div class="grid-2 form-group">
@@ -238,18 +254,18 @@
     </div>
 
     <div class="results">
-      <div class="res-card" id="cardFinEstimado">
+      <div class="res-card">
         <div class="res-title">Fin estimado de lote</div>
         <div class="res-value" id="finEstimado" style="font-size: 1.05rem;">--:--</div>
       </div>
 
-      <div class="res-card highlight" id="cardProyeccionCierre">
+      <div class="res-card highlight">
         <div class="res-title">Bines al cierre turno</div>
         <div class="res-value res-highlight" id="proyeccionBines">-- <span class="res-unit">totales</span></div>
       </div>
     </div>
 
-    <!-- SECCIÓN 3: INSUMOS QUÍMICOS (CERA Y JABÓN) -->
+    <!-- SECCIÓN 4: INSUMOS QUÍMICOS (CERA Y JABÓN) -->
     <div class="section-title">🧪 Consumo de Cera y Jabón (L/t)</div>
 
     <div class="grid-2 form-group">
@@ -290,7 +306,7 @@
 
   <script>
     const inputs = [
-      'bines', 'pesoBin', 'horaInicio', 'horaFin', 'pausas', 
+      'ritmoObjetivo', 'pesoBin', 'bines', 'horaInicio', 'horaFin', 'pausas', 
       'binesRestantes', 'horaCierreTurno',
       'ceraIni', 'ceraFin', 'jabonIni', 'jabonFin'
     ];
@@ -308,8 +324,9 @@
     document.getElementById('btnUpdate').addEventListener('click', setHoraActual);
 
     function calcular() {
-      const bines = parseFloat(document.getElementById('bines').value) || 0;
+      const objetivo = parseFloat(document.getElementById('ritmoObjetivo').value) || 0;
       const pesoBin = parseFloat(document.getElementById('pesoBin').value) || 330;
+      const bines = parseFloat(document.getElementById('bines').value) || 0;
       const horaInicio = document.getElementById('horaInicio').value;
       const horaFin = document.getElementById('horaFin').value;
       const pausas = parseFloat(document.getElementById('pausas').value) || 0;
@@ -323,10 +340,20 @@
 
       const errorDiv = document.getElementById('error');
 
-      // 1. TONELADAS PROCESADAS
+      // 1. CÁLCULO DE CADENCIA SEGÚN OBJETIVO
+      if (objetivo > 0) {
+        const segPorBinObjetivo = Math.round(3600 / objetivo);
+        const mObj = Math.floor(segPorBinObjetivo / 60);
+        const sObj = segPorBinObjetivo % 60;
+        document.getElementById('cadenciaObjetivo').textContent = `1 bin cada ${mObj}m ${sObj < 10 ? '0' : ''}${sObj}s`;
+      } else {
+        document.getElementById('cadenciaObjetivo').textContent = `Ingresar objetivo`;
+      }
+
+      // 2. TONELADAS PROCESADAS
       const toneladas = (bines * pesoBin) / 1000;
 
-      // 2. RITMOS, CADENCIA Y PROYECCIONES
+      // 3. RITMOS REALES Y PROYECCIONES
       if (horaInicio && horaFin) {
         const [hIni, mIni] = horaInicio.split(':').map(Number);
         const [hFin, mFin] = horaFin.split(':').map(Number);
@@ -353,19 +380,9 @@
           document.getElementById('ritmoNeto').innerHTML = `${ritmoSinPausas} <span class="res-unit">bin/h</span>`;
           document.getElementById('ritmoBruto').innerHTML = `${ritmoConPausas} <span class="res-unit">bin/h</span>`;
 
-          // CÁLCULO DE CADENCIA (Tiempo promedio entre bines)
-          if (bines > 0) {
-            const segPorBin = Math.round((tiempoNetoMin * 60) / bines);
-            const minCad = Math.floor(segPorBin / 60);
-            const segCad = segPorBin % 60;
-            document.getElementById('cadenciaDisplay').innerHTML = `1 bin cada ${minCad}m ${segCad}s`;
-          } else {
-            document.getElementById('cadenciaDisplay').innerHTML = `-- <span class="res-unit">por bin</span>`;
-          }
-
           const ritmoNetoVal = parseFloat(ritmoSinPausas);
 
-          // PROYECCIÓN 1: FIN ESTIMADO DE LOTE
+          // FIN ESTIMADO DE LOTE
           if (binesRestantes > 0 && ritmoNetoVal > 0) {
             const horasFaltantes = binesRestantes / ritmoNetoVal;
             const minutosFaltantes = Math.round(horasFaltantes * 60);
@@ -379,11 +396,11 @@
             document.getElementById('finEstimado').textContent = `--:--`;
           }
 
-          // PROYECCIÓN 2: BINES QUE SE LLEGAN A VOLCAR AL CIERRE
+          // BINES QUE SE LLEGAN A VOLCAR AL CIERRE
           if (horaCierre && ritmoNetoVal > 0) {
             const [hCie, mCie] = horaCierre.split(':').map(Number);
             let minCierre = hCie * 60 + mCie;
-            if (minCierre < minFin) minCierre += 24 * 60; // Por si el cierre cruza medianoche
+            if (minCierre < minFin) minCierre += 24 * 60;
 
             const minutosHastaCierre = minCierre - minFin;
             if (minutosHastaCierre > 0) {
@@ -402,7 +419,7 @@
         errorDiv.style.display = 'none';
       }
 
-      // 3. CONSUMO DE QUÍMICOS (L/t)
+      // 4. CONSUMO DE QUÍMICOS (L/t)
       if (toneladas > 0) {
         if (!isNaN(ceraIni) && !isNaN(ceraFin) && ceraIni >= ceraFin) {
           const lCera = ceraIni - ceraFin;
@@ -428,7 +445,6 @@
     function limpiarMetricasTiempo() {
       document.getElementById('ritmoNeto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
       document.getElementById('ritmoBruto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
-      document.getElementById('cadenciaDisplay').innerHTML = `-- <span class="res-unit">por bin</span>`;
       document.getElementById('finEstimado').textContent = `--:--`;
       document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
     }
