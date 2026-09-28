@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>El Paruco - Calculadora de Volcado</title>
+  <title>El Paruco - Control de Volcado e Insumos</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -25,61 +25,69 @@
       color: var(--text);
       display: flex;
       justify-content: center;
-      align-items: center;
-      padding: 16px;
+      padding: 16px 12px 32px;
       min-height: 100vh;
     }
     .container {
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 20px;
-      padding: 24px 20px;
+      padding: 20px 16px;
       box-shadow: 0 10px 25px -5px rgba(45, 87, 56, 0.08);
     }
     .brand-header {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     .brand-logo {
-      width: 95px;
-      height: 95px;
+      width: 80px;
+      height: 80px;
       object-fit: contain;
       border-radius: 50%;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
     h1 {
-      font-size: 1.25rem;
+      font-size: 1.2rem;
       font-weight: 700;
       color: var(--green-dark);
-      letter-spacing: -0.02em;
     }
     .subtitle {
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       color: var(--orange);
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--green-dark);
+      margin: 18px 0 10px;
+      padding-bottom: 4px;
+      border-bottom: 1.5px solid #edf2f7;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
     .form-group {
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
     .grid-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
     .label-row {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 6px;
+      margin-bottom: 5px;
     }
     label {
       display: block;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 600;
       color: var(--green-dark);
     }
@@ -91,40 +99,30 @@
       font-weight: 700;
       cursor: pointer;
       padding: 0;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-    }
-    .btn-update:active {
-      opacity: 0.7;
     }
     input {
       width: 100%;
-      padding: 11px 12px;
+      padding: 9px 10px;
       background: #fdfdfd;
       border: 1.5px solid var(--border);
-      border-radius: 10px;
+      border-radius: 8px;
       color: var(--text);
-      font-size: 1rem;
+      font-size: 0.95rem;
       outline: none;
-      transition: all 0.2s;
     }
     input:focus {
       border-color: var(--orange);
-      box-shadow: 0 0 0 3px rgba(243, 115, 36, 0.15);
     }
     .results {
-      margin-top: 22px;
-      padding-top: 18px;
-      border-top: 2px dashed #f1f5f9;
+      margin-top: 12px;
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
     }
     .res-card {
       background: #fafaf9;
-      border-radius: 14px;
-      padding: 14px 10px;
+      border-radius: 12px;
+      padding: 10px 8px;
       border: 1px solid var(--border);
       text-align: center;
     }
@@ -132,21 +130,23 @@
       background: #f0fdf4;
       border-color: #bbf7d0;
     }
+    .res-card.full-width {
+      grid-column: span 2;
+    }
     .res-title {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       font-weight: 700;
     }
     .res-value {
-      font-size: 1.45rem;
+      font-size: 1.25rem;
       font-weight: 800;
       color: var(--green-dark);
     }
     .res-unit {
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       color: var(--muted);
       font-weight: 500;
     }
@@ -155,10 +155,9 @@
     }
     .error-msg {
       color: #dc2626;
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       text-align: center;
-      margin-top: 10px;
-      font-weight: 500;
+      margin-top: 8px;
       display: none;
     }
   </style>
@@ -168,13 +167,22 @@
   <div class="container">
     <div class="brand-header">
       <img src="logo.jpg" alt="Logo El Paruco" class="brand-logo" onerror="this.style.display='none'">
-      <h1>Control de Volcado</h1>
+      <h1>Control de Volcado e Insumos</h1>
       <div class="subtitle">El Paruco</div>
     </div>
 
-    <div class="form-group">
-      <label for="bines">Bines volcados</label>
-      <input type="number" id="bines" min="0" placeholder="Ej: 30" inputmode="numeric">
+    <!-- SECCIÓN 1: TIEMPOS Y RITMO -->
+    <div class="section-title">⏱️ Ritmo de Volcado</div>
+    
+    <div class="grid-2 form-group">
+      <div>
+        <label for="bines">Bines volcados</label>
+        <input type="number" id="bines" min="0" placeholder="Ej: 30" inputmode="numeric">
+      </div>
+      <div>
+        <label for="pesoBin">Peso bin (kg)</label>
+        <input type="number" id="pesoBin" value="330" inputmode="numeric">
+      </div>
     </div>
 
     <div class="grid-2 form-group">
@@ -184,7 +192,7 @@
       </div>
       <div>
         <div class="label-row">
-          <label for="horaFin">Hora final</label>
+          <label for="horaFin">Hora actual / final</label>
           <button type="button" class="btn-update" id="btnUpdate">↻ Actualizar</button>
         </div>
         <input type="time" id="horaFin">
@@ -192,7 +200,7 @@
     </div>
 
     <div class="form-group">
-      <label for="pausas">Pausas totales (minutos)</label>
+      <label for="pausas">Pausas acumuladas (minutos)</label>
       <input type="number" id="pausas" value="0" min="0" inputmode="numeric">
     </div>
 
@@ -208,11 +216,84 @@
         <div class="res-title">Con pausas (bruto)</div>
         <div class="res-value" id="ritmoBruto">0.0 <span class="res-unit">bin/h</span></div>
       </div>
+
+      <div class="res-card full-width">
+        <div class="res-title">Cadencia de volcado (neto)</div>
+        <div class="res-value res-highlight" id="cadenciaDisplay">-- <span class="res-unit">por bin</span></div>
+      </div>
     </div>
+
+    <!-- SECCIÓN 2: PLANIFICACIÓN Y PROYECCIÓN -->
+    <div class="section-title">📈 Planificación y Proyección</div>
+
+    <div class="grid-2 form-group">
+      <div>
+        <label for="binesRestantes">Bines a volcar (lote)</label>
+        <input type="number" id="binesRestantes" min="0" placeholder="Faltan..." inputmode="numeric">
+      </div>
+      <div>
+        <label for="horaCierreTurno">Hora fin de turno</label>
+        <input type="time" id="horaCierreTurno">
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="res-card" id="cardFinEstimado">
+        <div class="res-title">Fin estimado de lote</div>
+        <div class="res-value" id="finEstimado" style="font-size: 1.05rem;">--:--</div>
+      </div>
+
+      <div class="res-card highlight" id="cardProyeccionCierre">
+        <div class="res-title">Bines al cierre turno</div>
+        <div class="res-value res-highlight" id="proyeccionBines">-- <span class="res-unit">totales</span></div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 3: INSUMOS QUÍMICOS (CERA Y JABÓN) -->
+    <div class="section-title">🧪 Consumo de Cera y Jabón (L/t)</div>
+
+    <div class="grid-2 form-group">
+      <div>
+        <label for="ceraIni">Cera Inicial (L)</label>
+        <input type="number" step="0.1" id="ceraIni" placeholder="Ej: 50.0">
+      </div>
+      <div>
+        <label for="ceraFin">Cera Final (L)</label>
+        <input type="number" step="0.1" id="ceraFin" placeholder="Ej: 20.0">
+      </div>
+    </div>
+
+    <div class="grid-2 form-group">
+      <div>
+        <label for="jabonIni">Jabón Inicial (L)</label>
+        <input type="number" step="0.1" id="jabonIni" placeholder="Ej: 30.0">
+      </div>
+      <div>
+        <label for="jabonFin">Jabón Final (L)</label>
+        <input type="number" step="0.1" id="jabonFin" placeholder="Ej: 15.0">
+      </div>
+    </div>
+
+    <div class="results">
+      <div class="res-card">
+        <div class="res-title">Consumo Cera</div>
+        <div class="res-value" id="ceraTon">0.00 <span class="res-unit">L/t</span></div>
+      </div>
+
+      <div class="res-card">
+        <div class="res-title">Consumo Jabón</div>
+        <div class="res-value" id="jabonTon">0.00 <span class="res-unit">L/t</span></div>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    const inputs = ['bines', 'horaInicio', 'horaFin', 'pausas'];
+    const inputs = [
+      'bines', 'pesoBin', 'horaInicio', 'horaFin', 'pausas', 
+      'binesRestantes', 'horaCierreTurno',
+      'ceraIni', 'ceraFin', 'jabonIni', 'jabonFin'
+    ];
     inputs.forEach(id => document.getElementById(id).addEventListener('input', calcular));
 
     function setHoraActual() {
@@ -223,59 +304,133 @@
       calcular();
     }
 
-    // Carga la hora exacta al abrir
     setHoraActual();
-
-    // Actualiza la hora al presionar el botón
     document.getElementById('btnUpdate').addEventListener('click', setHoraActual);
 
     function calcular() {
       const bines = parseFloat(document.getElementById('bines').value) || 0;
+      const pesoBin = parseFloat(document.getElementById('pesoBin').value) || 330;
       const horaInicio = document.getElementById('horaInicio').value;
       const horaFin = document.getElementById('horaFin').value;
       const pausas = parseFloat(document.getElementById('pausas').value) || 0;
+      const binesRestantes = parseFloat(document.getElementById('binesRestantes').value) || 0;
+      const horaCierre = document.getElementById('horaCierreTurno').value;
+
+      const ceraIni = parseFloat(document.getElementById('ceraIni').value);
+      const ceraFin = parseFloat(document.getElementById('ceraFin').value);
+      const jabonIni = parseFloat(document.getElementById('jabonIni').value);
+      const jabonFin = parseFloat(document.getElementById('jabonFin').value);
+
       const errorDiv = document.getElementById('error');
 
-      if (!horaInicio || !horaFin) {
-        limpiarResultados();
+      // 1. TONELADAS PROCESADAS
+      const toneladas = (bines * pesoBin) / 1000;
+
+      // 2. RITMOS, CADENCIA Y PROYECCIONES
+      if (horaInicio && horaFin) {
+        const [hIni, mIni] = horaInicio.split(':').map(Number);
+        const [hFin, mFin] = horaFin.split(':').map(Number);
+
+        const minInicio = hIni * 60 + mIni;
+        let minFin = hFin * 60 + mFin;
+        if (minFin < minInicio) minFin += 24 * 60;
+
+        const tiempoBrutoMin = minFin - minInicio;
+        const tiempoNetoMin = tiempoBrutoMin - pausas;
+
+        if (tiempoNetoMin <= 0) {
+          errorDiv.textContent = 'Las pausas superan o igualan el tiempo transcurrido.';
+          errorDiv.style.display = 'block';
+          limpiarMetricasTiempo();
+        } else {
+          errorDiv.style.display = 'none';
+          const horasBrutas = tiempoBrutoMin / 60;
+          const horasNetas = tiempoNetoMin / 60;
+
+          const ritmoConPausas = (bines / horasBrutas).toFixed(1);
+          const ritmoSinPausas = (bines / horasNetas).toFixed(1);
+
+          document.getElementById('ritmoNeto').innerHTML = `${ritmoSinPausas} <span class="res-unit">bin/h</span>`;
+          document.getElementById('ritmoBruto').innerHTML = `${ritmoConPausas} <span class="res-unit">bin/h</span>`;
+
+          // CÁLCULO DE CADENCIA (Tiempo promedio entre bines)
+          if (bines > 0) {
+            const segPorBin = Math.round((tiempoNetoMin * 60) / bines);
+            const minCad = Math.floor(segPorBin / 60);
+            const segCad = segPorBin % 60;
+            document.getElementById('cadenciaDisplay').innerHTML = `1 bin cada ${minCad}m ${segCad}s`;
+          } else {
+            document.getElementById('cadenciaDisplay').innerHTML = `-- <span class="res-unit">por bin</span>`;
+          }
+
+          const ritmoNetoVal = parseFloat(ritmoSinPausas);
+
+          // PROYECCIÓN 1: FIN ESTIMADO DE LOTE
+          if (binesRestantes > 0 && ritmoNetoVal > 0) {
+            const horasFaltantes = binesRestantes / ritmoNetoVal;
+            const minutosFaltantes = Math.round(horasFaltantes * 60);
+
+            let minEstimado = (minFin + minutosFaltantes) % (24 * 60);
+            const hEst = String(Math.floor(minEstimado / 60)).padStart(2, '0');
+            const mEst = String(minEstimado % 60).padStart(2, '0');
+
+            document.getElementById('finEstimado').textContent = `${hEst}:${mEst} hs (+${Math.floor(minutosFaltantes/60)}h ${minutosFaltantes%60}m)`;
+          } else {
+            document.getElementById('finEstimado').textContent = `--:--`;
+          }
+
+          // PROYECCIÓN 2: BINES QUE SE LLEGAN A VOLCAR AL CIERRE
+          if (horaCierre && ritmoNetoVal > 0) {
+            const [hCie, mCie] = horaCierre.split(':').map(Number);
+            let minCierre = hCie * 60 + mCie;
+            if (minCierre < minFin) minCierre += 24 * 60; // Por si el cierre cruza medianoche
+
+            const minutosHastaCierre = minCierre - minFin;
+            if (minutosHastaCierre > 0) {
+              const binesAdicionales = (minutosHastaCierre / 60) * ritmoNetoVal;
+              const totalBinesProyectados = Math.round(bines + binesAdicionales);
+              document.getElementById('proyeccionBines').innerHTML = `~${totalBinesProyectados} <span class="res-unit">bines</span>`;
+            } else {
+              document.getElementById('proyeccionBines').innerHTML = `${bines} <span class="res-unit">bines</span>`;
+            }
+          } else {
+            document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
+          }
+        }
+      } else {
+        limpiarMetricasTiempo();
         errorDiv.style.display = 'none';
-        return;
       }
 
-      const [hIni, mIni] = horaInicio.split(':').map(Number);
-      const [hFin, mFin] = horaFin.split(':').map(Number);
+      // 3. CONSUMO DE QUÍMICOS (L/t)
+      if (toneladas > 0) {
+        if (!isNaN(ceraIni) && !isNaN(ceraFin) && ceraIni >= ceraFin) {
+          const lCera = ceraIni - ceraFin;
+          const lPorTonCera = (lCera / toneladas).toFixed(2);
+          document.getElementById('ceraTon').innerHTML = `${lPorTonCera} <span class="res-unit">L/t</span>`;
+        } else {
+          document.getElementById('ceraTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
+        }
 
-      const minInicio = hIni * 60 + mIni;
-      let minFin = hFin * 60 + mFin;
-
-      if (minFin < minInicio) {
-        minFin += 24 * 60;
+        if (!isNaN(jabonIni) && !isNaN(jabonFin) && jabonIni >= jabonFin) {
+          const lJabon = jabonIni - jabonFin;
+          const lPorTonJabon = (lJabon / toneladas).toFixed(2);
+          document.getElementById('jabonTon').innerHTML = `${lPorTonJabon} <span class="res-unit">L/t</span>`;
+        } else {
+          document.getElementById('jabonTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
+        }
+      } else {
+        document.getElementById('ceraTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
+        document.getElementById('jabonTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
       }
-
-      const tiempoBrutoMin = minFin - minInicio;
-      const tiempoNetoMin = tiempoBrutoMin - pausas;
-
-      if (tiempoNetoMin <= 0) {
-        errorDiv.textContent = 'Las pausas superan o igualan el tiempo transcurrido.';
-        errorDiv.style.display = 'block';
-        limpiarResultados();
-        return;
-      }
-      errorDiv.style.display = 'none';
-
-      const horasBrutas = tiempoBrutoMin / 60;
-      const horasNetas = tiempoNetoMin / 60;
-
-      const ritmoConPausas = (bines / horasBrutas).toFixed(1);
-      const ritmoSinPausas = (bines / horasNetas).toFixed(1);
-
-      document.getElementById('ritmoNeto').innerHTML = `${ritmoSinPausas} <span class="res-unit">bin/h</span>`;
-      document.getElementById('ritmoBruto').innerHTML = `${ritmoConPausas} <span class="res-unit">bin/h</span>`;
     }
 
-    function limpiarResultados() {
+    function limpiarMetricasTiempo() {
       document.getElementById('ritmoNeto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
       document.getElementById('ritmoBruto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
+      document.getElementById('cadenciaDisplay').innerHTML = `-- <span class="res-unit">por bin</span>`;
+      document.getElementById('finEstimado').textContent = `--:--`;
+      document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
     }
   </script>
 </body>
