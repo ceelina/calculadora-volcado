@@ -13,8 +13,8 @@
       --text: #1e293b;
       --muted: #64748b;
       --border: #e2e8f0;
-      --green-ok: #15803d;
-      --red-alert: #b91c1c;
+      --wsp: #25d366;
+      --wsp-dark: #128c7e;
     }
     * {
       box-sizing: border-box;
@@ -27,7 +27,7 @@
       color: var(--text);
       display: flex;
       justify-content: center;
-      padding: 16px 12px 32px;
+      padding: 16px 12px 36px;
       min-height: 100vh;
     }
     .container {
@@ -166,6 +166,28 @@
       margin-top: 8px;
       display: none;
     }
+    .btn-wsp {
+      margin-top: 20px;
+      width: 100%;
+      background: var(--wsp);
+      color: white;
+      border: none;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+      transition: background 0.2s, transform 0.1s;
+    }
+    .btn-wsp:active {
+      background: var(--wsp-dark);
+      transform: scale(0.98);
+    }
   </style>
 </head>
 <body>
@@ -177,7 +199,7 @@
       <div class="subtitle">El Paruco</div>
     </div>
 
-    <!-- SECCIÓN 1: RITMO Y VELOCIDAD OBJETIVO -->
+    <!-- SECCIÓN 1: OBJETIVO Y PARÁMETROS -->
     <div class="section-title">🎯 Velocidad Objetivo y Cadencia</div>
 
     <div class="grid-2 form-group">
@@ -201,9 +223,15 @@
     <!-- SECCIÓN 2: REGISTRO DE VOLCADO REAL -->
     <div class="section-title">⏱️ Ritmo Real Registrado</div>
 
-    <div class="form-group">
-      <label for="bines">Bines volcados</label>
-      <input type="number" id="bines" min="0" placeholder="Ej: 30" inputmode="numeric">
+    <div class="grid-2 form-group">
+      <div>
+        <label for="bines">Bines volcados (ya)</label>
+        <input type="number" id="bines" min="0" placeholder="Ej: 30" inputmode="numeric">
+      </div>
+      <div>
+        <label for="totalLote">Total bines del lote</label>
+        <input type="number" id="totalLote" min="0" placeholder="Ej: 80" inputmode="numeric">
+      </div>
     </div>
 
     <div class="grid-2 form-group">
@@ -239,23 +267,17 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 3: PLANIFICACIÓN Y PROYECCIÓN -->
+    <!-- SECCIÓN 3: PROYECCIÓN Y CIERRE -->
     <div class="section-title">📈 Planificación y Proyección</div>
 
-    <div class="grid-2 form-group">
-      <div>
-        <label for="binesRestantes">Bines a volcar (lote)</label>
-        <input type="number" id="binesRestantes" min="0" placeholder="Faltan..." inputmode="numeric">
-      </div>
-      <div>
-        <label for="horaCierreTurno">Hora fin de turno</label>
-        <input type="time" id="horaCierreTurno">
-      </div>
+    <div class="form-group">
+      <label for="horaCierreTurno">Hora fin de jornada / turno</label>
+      <input type="time" id="horaCierreTurno">
     </div>
 
     <div class="results">
-      <div class="res-card">
-        <div class="res-title">Fin estimado de lote</div>
+      <div class="res-card" id="cardFinEstimado">
+        <div class="res-title" id="tituloFinEstimado">Fin lote</div>
         <div class="res-value" id="finEstimado" style="font-size: 1.05rem;">--:--</div>
       </div>
 
@@ -302,13 +324,17 @@
       </div>
     </div>
 
+    <!-- BOTÓN WHATSAPP -->
+    <button type="button" class="btn-wsp" id="btnWhatsapp">
+      📲 Compartir por WhatsApp
+    </button>
+
   </div>
 
   <script>
     const inputs = [
-      'ritmoObjetivo', 'pesoBin', 'bines', 'horaInicio', 'horaFin', 'pausas', 
-      'binesRestantes', 'horaCierreTurno',
-      'ceraIni', 'ceraFin', 'jabonIni', 'jabonFin'
+      'ritmoObjetivo', 'pesoBin', 'bines', 'totalLote', 'horaInicio', 'horaFin', 'pausas', 
+      'horaCierreTurno', 'ceraIni', 'ceraFin', 'jabonIni', 'jabonFin'
     ];
     inputs.forEach(id => document.getElementById(id).addEventListener('input', calcular));
 
@@ -323,14 +349,31 @@
     setHoraActual();
     document.getElementById('btnUpdate').addEventListener('click', setHoraActual);
 
+    // Estado global de variables calculadas para el mensaje de WhatsApp
+    let datosReporte = {
+      bines: 0,
+      totalLote: 0,
+      faltantes: 0,
+      horaInicio: '',
+      horaFin: '',
+      pausas: 0,
+      ritmoNeto: '0.0',
+      ritmoBruto: '0.0',
+      cadenciaObj: '',
+      finEstimado: '--:--',
+      proyeccionCierre: '--',
+      ceraTon: '0.00',
+      jabonTon: '0.00'
+    };
+
     function calcular() {
       const objetivo = parseFloat(document.getElementById('ritmoObjetivo').value) || 0;
       const pesoBin = parseFloat(document.getElementById('pesoBin').value) || 330;
       const bines = parseFloat(document.getElementById('bines').value) || 0;
+      const totalLote = parseFloat(document.getElementById('totalLote').value) || 0;
       const horaInicio = document.getElementById('horaInicio').value;
       const horaFin = document.getElementById('horaFin').value;
       const pausas = parseFloat(document.getElementById('pausas').value) || 0;
-      const binesRestantes = parseFloat(document.getElementById('binesRestantes').value) || 0;
       const horaCierre = document.getElementById('horaCierreTurno').value;
 
       const ceraIni = parseFloat(document.getElementById('ceraIni').value);
@@ -340,20 +383,29 @@
 
       const errorDiv = document.getElementById('error');
 
-      // 1. CÁLCULO DE CADENCIA SEGÚN OBJETIVO
+      datosReporte.bines = bines;
+      datosReporte.totalLote = totalLote;
+      datosReporte.horaInicio = horaInicio;
+      datosReporte.horaFin = horaFin;
+      datosReporte.pausas = pausas;
+
+      // 1. CADENCIA OBJETIVO
       if (objetivo > 0) {
         const segPorBinObjetivo = Math.round(3600 / objetivo);
         const mObj = Math.floor(segPorBinObjetivo / 60);
         const sObj = segPorBinObjetivo % 60;
-        document.getElementById('cadenciaObjetivo').textContent = `1 bin cada ${mObj}m ${sObj < 10 ? '0' : ''}${sObj}s`;
+        const textoCad = `1 bin cada ${mObj}m ${sObj < 10 ? '0' : ''}${sObj}s`;
+        document.getElementById('cadenciaObjetivo').textContent = textoCad;
+        datosReporte.cadenciaObj = textoCad;
       } else {
         document.getElementById('cadenciaObjetivo').textContent = `Ingresar objetivo`;
+        datosReporte.cadenciaObj = '';
       }
 
-      // 2. TONELADAS PROCESADAS
+      // 2. TONELADAS
       const toneladas = (bines * pesoBin) / 1000;
 
-      // 3. RITMOS REALES Y PROYECCIONES
+      // 3. RITMOS Y PROYECCIONES
       if (horaInicio && horaFin) {
         const [hIni, mIni] = horaInicio.split(':').map(Number);
         const [hFin, mFin] = horaFin.split(':').map(Number);
@@ -380,23 +432,34 @@
           document.getElementById('ritmoNeto').innerHTML = `${ritmoSinPausas} <span class="res-unit">bin/h</span>`;
           document.getElementById('ritmoBruto').innerHTML = `${ritmoConPausas} <span class="res-unit">bin/h</span>`;
 
-          const ritmoNetoVal = parseFloat(ritmoSinPausas);
+          datosReporte.ritmoNeto = ritmoSinPausas;
+          datosReporte.ritmoBruto = ritmoConPausas;
 
-          // FIN ESTIMADO DE LOTE
-          if (binesRestantes > 0 && ritmoNetoVal > 0) {
-            const horasFaltantes = binesRestantes / ritmoNetoVal;
+          const ritmoNetoVal = parseFloat(ritmoSinPausas);
+          const faltantes = Math.max(0, totalLote - bines);
+          datosReporte.faltantes = faltantes;
+
+          if (totalLote > 0 && bines >= totalLote) {
+            document.getElementById('tituloFinEstimado').textContent = `Lote completado`;
+            document.getElementById('finEstimado').textContent = `¡Terminado!`;
+            datosReporte.finEstimado = '¡Terminado!';
+          } else if (faltantes > 0 && ritmoNetoVal > 0) {
+            const horasFaltantes = faltantes / ritmoNetoVal;
             const minutosFaltantes = Math.round(horasFaltantes * 60);
 
             let minEstimado = (minFin + minutosFaltantes) % (24 * 60);
             const hEst = String(Math.floor(minEstimado / 60)).padStart(2, '0');
             const mEst = String(minEstimado % 60).padStart(2, '0');
 
+            document.getElementById('tituloFinEstimado').textContent = `Fin lote (faltan ${faltantes} b)`;
             document.getElementById('finEstimado').textContent = `${hEst}:${mEst} hs (+${Math.floor(minutosFaltantes/60)}h ${minutosFaltantes%60}m)`;
+            datosReporte.finEstimado = `${hEst}:${mEst} hs`;
           } else {
+            document.getElementById('tituloFinEstimado').textContent = `Fin lote`;
             document.getElementById('finEstimado').textContent = `--:--`;
+            datosReporte.finEstimado = '--:--';
           }
 
-          // BINES QUE SE LLEGAN A VOLCAR AL CIERRE
           if (horaCierre && ritmoNetoVal > 0) {
             const [hCie, mCie] = horaCierre.split(':').map(Number);
             let minCierre = hCie * 60 + mCie;
@@ -407,11 +470,14 @@
               const binesAdicionales = (minutosHastaCierre / 60) * ritmoNetoVal;
               const totalBinesProyectados = Math.round(bines + binesAdicionales);
               document.getElementById('proyeccionBines').innerHTML = `~${totalBinesProyectados} <span class="res-unit">bines</span>`;
+              datosReporte.proyeccionCierre = `~${totalBinesProyectados} bines`;
             } else {
               document.getElementById('proyeccionBines').innerHTML = `${bines} <span class="res-unit">bines</span>`;
+              datosReporte.proyeccionCierre = `${bines} bines`;
             }
           } else {
             document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
+            datosReporte.proyeccionCierre = '--';
           }
         }
       } else {
@@ -419,22 +485,26 @@
         errorDiv.style.display = 'none';
       }
 
-      // 4. CONSUMO DE QUÍMICOS (L/t)
+      // 4. QUÍMICOS
       if (toneladas > 0) {
         if (!isNaN(ceraIni) && !isNaN(ceraFin) && ceraIni >= ceraFin) {
           const lCera = ceraIni - ceraFin;
           const lPorTonCera = (lCera / toneladas).toFixed(2);
           document.getElementById('ceraTon').innerHTML = `${lPorTonCera} <span class="res-unit">L/t</span>`;
+          datosReporte.ceraTon = lPorTonCera;
         } else {
           document.getElementById('ceraTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
+          datosReporte.ceraTon = '0.00';
         }
 
         if (!isNaN(jabonIni) && !isNaN(jabonFin) && jabonIni >= jabonFin) {
           const lJabon = jabonIni - jabonFin;
           const lPorTonJabon = (lJabon / toneladas).toFixed(2);
           document.getElementById('jabonTon').innerHTML = `${lPorTonJabon} <span class="res-unit">L/t</span>`;
+          datosReporte.jabonTon = lPorTonJabon;
         } else {
           document.getElementById('jabonTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
+          datosReporte.jabonTon = '0.00';
         }
       } else {
         document.getElementById('ceraTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
@@ -445,9 +515,45 @@
     function limpiarMetricasTiempo() {
       document.getElementById('ritmoNeto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
       document.getElementById('ritmoBruto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
+      document.getElementById('tituloFinEstimado').textContent = `Fin lote`;
       document.getElementById('finEstimado').textContent = `--:--`;
       document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
     }
+
+    // ACCIÓN COMPARTIR POR WHATSAPP
+    document.getElementById('btnWhatsapp').addEventListener('click', () => {
+      const hoy = new Date();
+      const fechaStr = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
+      
+      let loteTexto = `${datosReporte.bines}`;
+      if (datosReporte.totalLote > 0) {
+        loteTexto += ` / ${datosReporte.totalLote} (Faltan: ${datosReporte.faltantes})`;
+      }
+
+      let mensaje = `🍊 *REPORTE DE VOLCADO - EL PARUCO* 🍊\n`;
+      mensaje += `📅 *Fecha:* ${fechaStr}\n\n`;
+      mensaje += `📦 *Bines:* ${loteTexto}\n`;
+      mensaje += `⏱️ *Horario:* ${datosReporte.horaInicio || '--:--'} a ${datosReporte.horaFin || '--:--'} (Pausas: ${datosReporte.pausas} min)\n`;
+      mensaje += `⚡ *Ritmo neto:* ${datosReporte.ritmoNeto} bin/h\n`;
+      mensaje += `⚡ *Ritmo bruto:* ${datosReporte.ritmoBruto} bin/h\n`;
+      if (datosReporte.cadenciaObj) {
+        mensaje += `🎯 *Cadencia objetivo:* ${datosReporte.cadenciaObj}\n`;
+      }
+      if (datosReporte.finEstimado !== '--:--') {
+        mensaje += `🏁 *Fin estimado de lote:* ${datosReporte.finEstimado}\n`;
+      }
+      if (datosReporte.proyeccionCierre !== '--') {
+        mensaje += `📊 *Proyección al cierre:* ${datosReporte.proyeccionCierre}\n`;
+      }
+      if (parseFloat(datosReporte.ceraTon) > 0 || parseFloat(datosReporte.jabonTon) > 0) {
+        mensaje += `\n🧪 *Consumos químicos:*\n`;
+        mensaje += `• Cera: ${datosReporte.ceraTon} L/t\n`;
+        mensaje += `• Jabón: ${datosReporte.jabonTon} L/t\n`;
+      }
+
+      const urlWsp = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(urlWsp, '_blank');
+    });
   </script>
 </body>
 </html>
