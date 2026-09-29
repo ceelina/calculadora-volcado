@@ -322,7 +322,6 @@
       </div>
     </div>
 
-    <!-- BOTÓN WHATSAPP -->
     <button type="button" class="btn-wsp" id="btnWhatsapp">
       📲 Compartir por WhatsApp
     </button>
@@ -339,8 +338,32 @@
       if (el) {
         el.addEventListener('input', calcular);
         el.addEventListener('change', calcular);
+        el.addEventListener('blur', calcular);
       }
     });
+
+    // Convierte cualquier valor de input de hora a minutos del día (0 a 1439)
+    function obtenerMinutosDeInput(id) {
+      const el = document.getElementById(id);
+      if (!el) return null;
+
+      // Intento 1: API nativa del navegador
+      if (typeof el.valueAsNumber === 'number' && !isNaN(el.valueAsNumber)) {
+        return Math.floor(el.valueAsNumber / 60000);
+      }
+
+      // Intento 2: Parseo del string
+      const val = el.value;
+      if (!val) return null;
+      const partes = val.split(':');
+      if (partes.length < 2) return null;
+
+      const h = parseInt(partes[0], 10);
+      const m = parseInt(partes[1], 10);
+      if (isNaN(h) || isNaN(m)) return null;
+
+      return h * 60 + m;
+    }
 
     function setHoraActual() {
       const ahora = new Date();
@@ -374,10 +397,11 @@
       const pesoBin = parseFloat(document.getElementById('pesoBin').value) || 330;
       const bines = parseFloat(document.getElementById('bines').value) || 0;
       const totalLote = parseFloat(document.getElementById('totalLote').value) || 0;
-      const horaInicio = document.getElementById('horaInicio').value;
-      const horaFin = document.getElementById('horaFin').value;
       const pausas = parseFloat(document.getElementById('pausas').value) || 0;
-      const horaCierre = document.getElementById('horaCierreTurno').value;
+
+      const minInicio = obtenerMinutosDeInput('horaInicio');
+      const minFinRaw = obtenerMinutosDeInput('horaFin');
+      const minCierreRaw = obtenerMinutosDeInput('horaCierreTurno');
 
       const ceraIni = parseFloat(document.getElementById('ceraIni').value);
       const ceraFin = parseFloat(document.getElementById('ceraFin').value);
@@ -388,8 +412,8 @@
 
       datosReporte.bines = bines;
       datosReporte.totalLote = totalLote;
-      datosReporte.horaInicio = horaInicio;
-      datosReporte.horaFin = horaFin;
+      datosReporte.horaInicio = document.getElementById('horaInicio').value;
+      datosReporte.horaFin = document.getElementById('horaFin').value;
       datosReporte.pausas = pausas;
 
       // 1. Cadencia objetivo
@@ -408,20 +432,15 @@
       // 2. Toneladas
       const toneladas = (bines * pesoBin) / 1000;
 
-      // 3. Ritmos de volcado
-      if (horaInicio && horaFin) {
-        const [hIni, mIni] = horaInicio.split(':').map(Number);
-        const [hFin, mFin] = horaFin.split(':').map(Number);
-
-        const minInicio = hIni * 60 + mIni;
-        let minFin = hFin * 60 + mFin;
+      // 3. Ritmo real y tiempos
+      if (minInicio !== null && minFinRaw !== null) {
+        let minFin = minFinRaw;
         if (minFin < minInicio) minFin += 24 * 60; // Cruce de medianoche
 
         const tiempoBrutoMin = minFin - minInicio;
         const tiempoNetoMin = tiempoBrutoMin - pausas;
 
         if (tiempoBrutoMin <= 0) {
-          // Aún no hay tiempo transcurrido
           errorDiv.style.display = 'none';
           limpiarMetricasTiempo();
         } else if (tiempoNetoMin <= 0) {
@@ -468,10 +487,9 @@
             datosReporte.finEstimado = '--:--';
           }
 
-          // Proyección cierre de turno
-          if (horaCierre && ritmoNetoVal > 0) {
-            const [hCie, mCie] = horaCierre.split(':').map(Number);
-            let minCierre = hCie * 60 + mCie;
+          // Proyección cierre turno
+          if (minCierreRaw !== null && ritmoNetoVal > 0) {
+            let minCierre = minCierreRaw;
             if (minCierre < minFin) minCierre += 24 * 60;
 
             const minutosHastaCierre = minCierre - minFin;
@@ -529,7 +547,6 @@
       document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
     }
 
-    // Compartir por WhatsApp
     document.getElementById('btnWhatsapp').addEventListener('click', () => {
       const hoy = new Date();
       const fechaStr = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
@@ -555,14 +572,4 @@
         mensaje += `📊 *Proyección al cierre:* ${datosReporte.proyeccionCierre}\n`;
       }
       if (parseFloat(datosReporte.ceraTon) > 0 || parseFloat(datosReporte.jabonTon) > 0) {
-        mensaje += `\n🧪 *Consumos químicos:*\n`;
-        mensaje += `• Cera: ${datosReporte.ceraTon} L/t\n`;
-        mensaje += `• Jabón: ${datosReporte.jabonTon} L/t\n`;
-      }
-
-      const urlWsp = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-      window.open(urlWsp, '_blank');
-    });
-  </script>
-</body>
-</html>
+        mensaje += `\n🧪 *Consumos químic
