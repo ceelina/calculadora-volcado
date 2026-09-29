@@ -182,11 +182,9 @@
       align-items: center;
       gap: 8px;
       box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
-      transition: background 0.2s, transform 0.1s;
     }
     .btn-wsp:active {
       background: var(--wsp-dark);
-      transform: scale(0.98);
     }
   </style>
 </head>
@@ -332,11 +330,17 @@
   </div>
 
   <script>
-    const inputs = [
+    const inputIds = [
       'ritmoObjetivo', 'pesoBin', 'bines', 'totalLote', 'horaInicio', 'horaFin', 'pausas', 
       'horaCierreTurno', 'ceraIni', 'ceraFin', 'jabonIni', 'jabonFin'
     ];
-    inputs.forEach(id => document.getElementById(id).addEventListener('input', calcular));
+    inputIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', calcular);
+        el.addEventListener('change', calcular);
+      }
+    });
 
     function setHoraActual() {
       const ahora = new Date();
@@ -349,7 +353,6 @@
     setHoraActual();
     document.getElementById('btnUpdate').addEventListener('click', setHoraActual);
 
-    // Estado global de variables calculadas para el mensaje de WhatsApp
     let datosReporte = {
       bines: 0,
       totalLote: 0,
@@ -389,7 +392,7 @@
       datosReporte.horaFin = horaFin;
       datosReporte.pausas = pausas;
 
-      // 1. CADENCIA OBJETIVO
+      // 1. Cadencia objetivo
       if (objetivo > 0) {
         const segPorBinObjetivo = Math.round(3600 / objetivo);
         const mObj = Math.floor(segPorBinObjetivo / 60);
@@ -402,22 +405,26 @@
         datosReporte.cadenciaObj = '';
       }
 
-      // 2. TONELADAS
+      // 2. Toneladas
       const toneladas = (bines * pesoBin) / 1000;
 
-      // 3. RITMOS Y PROYECCIONES
+      // 3. Ritmos de volcado
       if (horaInicio && horaFin) {
         const [hIni, mIni] = horaInicio.split(':').map(Number);
         const [hFin, mFin] = horaFin.split(':').map(Number);
 
         const minInicio = hIni * 60 + mIni;
         let minFin = hFin * 60 + mFin;
-        if (minFin < minInicio) minFin += 24 * 60;
+        if (minFin < minInicio) minFin += 24 * 60; // Cruce de medianoche
 
         const tiempoBrutoMin = minFin - minInicio;
         const tiempoNetoMin = tiempoBrutoMin - pausas;
 
-        if (tiempoNetoMin <= 0) {
+        if (tiempoBrutoMin <= 0) {
+          // Aún no hay tiempo transcurrido
+          errorDiv.style.display = 'none';
+          limpiarMetricasTiempo();
+        } else if (tiempoNetoMin <= 0) {
           errorDiv.textContent = 'Las pausas superan o igualan el tiempo transcurrido.';
           errorDiv.style.display = 'block';
           limpiarMetricasTiempo();
@@ -439,6 +446,7 @@
           const faltantes = Math.max(0, totalLote - bines);
           datosReporte.faltantes = faltantes;
 
+          // Proyección fin de lote
           if (totalLote > 0 && bines >= totalLote) {
             document.getElementById('tituloFinEstimado').textContent = `Lote completado`;
             document.getElementById('finEstimado').textContent = `¡Terminado!`;
@@ -460,6 +468,7 @@
             datosReporte.finEstimado = '--:--';
           }
 
+          // Proyección cierre de turno
           if (horaCierre && ritmoNetoVal > 0) {
             const [hCie, mCie] = horaCierre.split(':').map(Number);
             let minCierre = hCie * 60 + mCie;
@@ -485,7 +494,7 @@
         errorDiv.style.display = 'none';
       }
 
-      // 4. QUÍMICOS
+      // 4. Consumos químicos (L/t)
       if (toneladas > 0) {
         if (!isNaN(ceraIni) && !isNaN(ceraFin) && ceraIni >= ceraFin) {
           const lCera = ceraIni - ceraFin;
@@ -520,7 +529,7 @@
       document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
     }
 
-    // ACCIÓN COMPARTIR POR WHATSAPP
+    // Compartir por WhatsApp
     document.getElementById('btnWhatsapp').addEventListener('click', () => {
       const hoy = new Date();
       const fechaStr = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
