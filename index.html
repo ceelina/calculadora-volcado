@@ -263,7 +263,7 @@
     </div>
 
     <!-- SECCIÓN 2: REGISTRO DE VOLCADO REAL -->
-    <div class="section-title">⏱️ Registro de Volcado</div>
+    <div class="section-title">⏱️️ Registro de Volcado</div>
 
     <div class="grid-2 form-group">
       <div>
@@ -328,7 +328,7 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 4: RENDIMIENTO CON DESFASAJE Y PESOS VARIABLES -->
+    <!-- SECCIÓN 4: RENDIMIENTO CON DESFASAJE, PESOS VARIABLES Y DESCUENTO INICIAL -->
     <div class="section-title">📦 Empaque y % Rendimiento</div>
 
     <div class="form-group">
@@ -336,51 +336,43 @@
       <input type="number" id="desfasajeMin" value="10" min="0" inputmode="numeric">
     </div>
 
+    <!-- Resto/Remanente inicial a descontar -->
+    <div class="grid-2 form-group" style="background: #fff7ed; padding: 8px; border-radius: 10px; border: 1px dashed #fed7aa;">
+      <div>
+        <label for="cajasIniciales" style="color: var(--orange);">Resto cajas iniciales</label>
+        <input type="number" id="cajasIniciales" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div>
+        <label for="kgCajaInicial" style="color: var(--orange);">Kg neto/caja inicial</label>
+        <input type="number" step="0.1" id="kgCajaInicial" placeholder="15.0">
+      </div>
+    </div>
+
     <div class="headers-empaque">
-      <span>Pallets/Pisos</span>
+      <span>Bultos/Pallets</span>
       <span>Cajas c/u</span>
-      <span>Kg neto/caja</span>
+      <span>Kg neto/cj</span>
       <span></span>
     </div>
 
     <div id="empaqueContainer">
-      <!-- Pallet tipo 1 -->
+      <!-- Fila 1 vacía -->
       <div class="empaque-row">
         <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
-        <input type="number" class="e-cajas" placeholder="Cajas" value="88" inputmode="numeric">
-        <input type="number" step="0.1" class="e-kg" placeholder="Kg" value="15.0">
+        <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
+        <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
         <button type="button" class="btn-del-row" onclick="eliminarFilaEmpaque(this)">×</button>
       </div>
-      <!-- Pallet tipo 2 -->
+      <!-- Fila 2 vacía -->
       <div class="empaque-row">
         <input type="number" class="e-cant" placeholder="Ej: 7" inputmode="numeric">
-        <input type="number" class="e-cajas" placeholder="Cajas" value="121" inputmode="numeric">
-        <input type="number" step="0.1" class="e-kg" placeholder="Kg" value="10.0">
-        <button type="button" class="btn-del-row" onclick="eliminarFilaEmpaque(this)">×</button>
-      </div>
-      <!-- Pisos sueltos -->
-      <div class="empaque-row">
-        <input type="number" class="e-cant" placeholder="Ej: 3 pisos" inputmode="numeric">
-        <input type="number" class="e-cajas" placeholder="Cajas/piso" value="11" inputmode="numeric">
-        <input type="number" step="0.1" class="e-kg" placeholder="Kg" value="15.0">
+        <input type="number" class="e-cajas" placeholder="Ej: 121" inputmode="numeric">
+        <input type="number" step="0.1" class="e-kg" placeholder="Ej: 10.0">
         <button type="button" class="btn-del-row" onclick="eliminarFilaEmpaque(this)">×</button>
       </div>
     </div>
 
-    <button type="button" class="btn-add-row" id="btnAddEmpaque">+ Agregar otro pallet o pisos</button>
-
-    <div class="form-group">
-      <div class="grid-2">
-        <div>
-          <label for="cajasSueltas">Cajas sueltas</label>
-          <input type="number" id="cajasSueltas" placeholder="Cant." min="0" inputmode="numeric">
-        </div>
-        <div>
-          <label for="cajasSueltasKg">Kg neto caja suelta</label>
-          <input type="number" step="0.1" id="cajasSueltasKg" value="15.0">
-        </div>
-      </div>
-    </div>
+    <button type="button" class="btn-add-row" id="btnAddEmpaque">+ Agregar otro pallet, piso o bulto</button>
 
     <div class="results">
       <div class="res-card highlight">
@@ -393,11 +385,11 @@
         <div class="res-value" id="descartePorc">0.0 <span class="res-unit">%</span></div>
       </div>
       <div class="res-card">
-        <div class="res-title">Total Cajas</div>
+        <div class="res-title">Cajas Netas Lote</div>
         <div class="res-value" id="totalCajasDisplay">0 <span class="res-unit">cajas</span></div>
       </div>
       <div class="res-card">
-        <div class="res-title">Kilos Empacados</div>
+        <div class="res-title">Kg Netos Lote</div>
         <div class="res-value" id="totalKgEmpacados">0 <span class="res-unit">kg</span></div>
       </div>
     </div>
@@ -457,8 +449,8 @@
       div.className = 'empaque-row';
       div.innerHTML = `
         <input type="number" class="e-cant" placeholder="Cant." inputmode="numeric">
-        <input type="number" class="e-cajas" placeholder="Cajas" value="88" inputmode="numeric">
-        <input type="number" step="0.1" class="e-kg" placeholder="Kg" value="15.0">
+        <input type="number" class="e-cajas" placeholder="Cajas" inputmode="numeric">
+        <input type="number" step="0.1" class="e-kg" placeholder="Kg">
         <button type="button" class="btn-del-row" onclick="eliminarFilaEmpaque(this)">×</button>
       `;
       container.appendChild(div);
@@ -507,8 +499,8 @@
       const finVal = document.getElementById('horaFin').value;
       const cierreVal = document.getElementById('horaCierreTurno').value;
 
-      const sueltas = parseFloat(document.getElementById('cajasSueltas').value) || 0;
-      const sueltasKg = parseFloat(document.getElementById('cajasSueltasKg').value) || 15;
+      const cajasIni = parseFloat(document.getElementById('cajasIniciales').value) || 0;
+      const kgCajaIni = parseFloat(document.getElementById('kgCajaInicial').value) || 15;
 
       const ceraIni = parseFloat(document.getElementById('ceraIni').value);
       const ceraFin = parseFloat(document.getElementById('ceraFin').value);
@@ -595,4 +587,10 @@
               document.getElementById('proyeccionBines').innerHTML = `~${totalEst} <span class="res-unit">bines</span>`;
               reporte.cierre = `~${totalEst} bines`;
             } else {
-              document.getElementById('p
+              document.getElementById('proyeccionBines').innerHTML = `${bines} <span class="res-unit">bines</span>`;
+              reporte.cierre = `${bines} bines`;
+            }
+          } else {
+            document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
+            reporte.cierre = '--';
+        
