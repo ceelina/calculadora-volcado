@@ -160,7 +160,6 @@
       width: 100%;
       margin-top: 4px;
       margin-bottom: 12px;
-      transition: background 0.2s;
     }
     .btn-add-row:active {
       background: #e2e8f0;
@@ -291,7 +290,7 @@
     </div>
 
     <!-- SECCIÓN 2: REGISTRO DE VOLCADO REAL -->
-    <div class="section-title">⏱️️ Registro de Volcado</div>
+    <div class="section-title">⏱️ Registro de Volcado</div>
 
     <div class="grid-2 form-group">
       <div>
@@ -364,7 +363,6 @@
       <input type="number" id="desfasajeMin" value="10" min="0" inputmode="numeric">
     </div>
 
-    <!-- Resto/Remanente inicial a descontar -->
     <div class="grid-2 form-group" style="background: #fff7ed; padding: 10px; border-radius: 10px; border: 1px dashed #fed7aa;">
       <div>
         <label for="cajasIniciales" style="color: var(--orange);">Resto cajas inicial</label>
@@ -384,14 +382,12 @@
     </div>
 
     <div id="empaqueContainer">
-      <!-- Renglón 1 -->
       <div class="empaque-row">
         <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
         <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
         <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
         <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
       </div>
-      <!-- Renglón 2 -->
       <div class="empaque-row">
         <input type="number" class="e-cant" placeholder="Ej: 3" inputmode="numeric">
         <input type="number" class="e-cajas" placeholder="Ej: 11" inputmode="numeric">
@@ -474,7 +470,6 @@
       'kgCajaInicial', 'ceraIni', 'ceraFin', 'jabonIni', 'jabonFin'
     ];
 
-    // CARGAR DATOS GUARDADOS
     function cargarEstadoGuardado() {
       camposPersistentes.forEach(id => {
         const val = localStorage.getItem('paruco_' + id);
@@ -484,7 +479,6 @@
         }
       });
 
-      // Cargar filas de empaque si existen
       const empaqueData = localStorage.getItem('paruco_empaqueRows');
       if (empaqueData) {
         try {
@@ -512,7 +506,6 @@
       }
     }
 
-    // GUARDAR DATOS EN VIVO
     function guardarEstado() {
       camposPersistentes.forEach(id => {
         const el = document.getElementById(id);
@@ -521,7 +514,6 @@
         }
       });
 
-      // Guardar filas de empaque
       const empaqueRows = [];
       document.querySelectorAll('#empaqueContainer .empaque-row').forEach(row => {
         empaqueRows.push({
@@ -533,7 +525,6 @@
       localStorage.setItem('paruco_empaqueRows', JSON.stringify(empaqueRows));
     }
 
-    // LIMPIAR CAMPOS / NUEVO LOTE
     document.getElementById('btnClear').addEventListener('click', () => {
       if (confirm('¿Deseas limpiar todos los campos para iniciar un nuevo lote?')) {
         camposPersistentes.forEach(id => {
@@ -541,7 +532,6 @@
         });
         localStorage.removeItem('paruco_empaqueRows');
 
-        // Valores por defecto
         document.getElementById('ritmoObjetivo').value = '20';
         document.getElementById('pesoBin').value = '330';
         document.getElementById('bines').value = '';
@@ -557,7 +547,6 @@
         document.getElementById('jabonIni').value = '';
         document.getElementById('jabonFin').value = '';
 
-        // Reiniciar filas de empaque
         const container = document.getElementById('empaqueContainer');
         container.innerHTML = `
           <div class="empaque-row">
@@ -583,7 +572,6 @@
       }
     });
 
-    // DELEGACIÓN ROBUSTA PARA ELIMINAR FILAS
     const empaqueContainer = document.getElementById('empaqueContainer');
     empaqueContainer.addEventListener('click', (e) => {
       if (e.target && e.target.classList.contains('btn-del-row')) {
@@ -599,7 +587,6 @@
       }
     });
 
-    // BOTÓN AGREGAR RENGLÓN
     document.getElementById('btnAddEmpaque').addEventListener('click', () => {
       const nuevaFila = document.createElement('div');
       nuevaFila.className = 'empaque-row';
@@ -613,4 +600,16 @@
 
       nuevaFila.querySelectorAll('input').forEach(inp => {
         inp.addEventListener('input', calcular);
-  
+        inp.addEventListener('change', calcular);
+      });
+      calcular();
+    });
+
+    // LECTOR DEFINITIVO Y BLINDADO DE MINUTOS DE UN INPUT TIME
+    function obtenerMinutos(idInput) {
+      const el = document.getElementById(idInput);
+      if (!el) return null;
+
+      // 1. Método nativo del navegador (milisegundos desde medianoche)
+      if (typeof el.valueAsNumber === 'number' && !isNaN(el.valueAsNumber)) {
+        return Math.floor(el.valu
