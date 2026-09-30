@@ -144,6 +144,9 @@
       justify-content: center;
       align-items: center;
     }
+    .btn-del-row:active {
+      background: #fca5a5;
+    }
     .btn-add-row {
       background: #f1f5f9;
       color: var(--green-dark);
@@ -156,6 +159,9 @@
       width: 100%;
       margin-top: 4px;
       margin-bottom: 12px;
+    }
+    .btn-add-row:active {
+      background: #e2e8f0;
     }
     .results {
       margin-top: 10px;
@@ -206,14 +212,6 @@
       color: var(--muted);
       margin-top: 3px;
     }
-    .error-msg {
-      color: #dc2626;
-      font-size: 0.8rem;
-      text-align: center;
-      margin: 8px 0;
-      display: none;
-      font-weight: 600;
-    }
     .btn-wsp {
       margin-top: 20px;
       width: 100%;
@@ -246,6 +244,10 @@
       justify-content: center;
       align-items: center;
     }
+    .btn-clear:active {
+      background: #fee2e2;
+      color: #dc2626;
+    }
   </style>
 </head>
 <body>
@@ -257,7 +259,7 @@
       <div class="subtitle">El Paruco</div>
     </div>
 
-    <!-- SECCIÓN 1: OBJETIVO -->
+    <!-- SECCIÓN 1: OBJETIVO Y PARÁMETROS -->
     <div class="section-title">🎯 Velocidad Objetivo</div>
     <div class="grid-2 form-group">
       <div>
@@ -277,7 +279,7 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 2: REGISTRO REAL -->
+    <!-- SECCIÓN 2: REGISTRO DE VOLCADO REAL -->
     <div class="section-title">⏱️ Registro de Volcado</div>
 
     <div class="grid-2 form-group">
@@ -309,8 +311,6 @@
       <label for="pausas">Pausas acumuladas (minutos)</label>
       <input type="number" id="pausas" value="0" min="0" inputmode="numeric">
     </div>
-
-    <div id="error" class="error-msg"></div>
 
     <div class="results">
       <div class="res-card highlight">
@@ -374,13 +374,13 @@
         <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
         <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
         <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
-        <button type="button" class="btn-del-row">×</button>
+        <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
       </div>
       <div class="empaque-row">
         <input type="number" class="e-cant" placeholder="Ej: 3" inputmode="numeric">
         <input type="number" class="e-cajas" placeholder="Ej: 11" inputmode="numeric">
         <input type="number" step="0.1" class="e-kg" placeholder="Ej: 10.0">
-        <button type="button" class="btn-del-row">×</button>
+        <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
       </div>
     </div>
 
@@ -478,7 +478,7 @@
                 <input type="number" class="e-cant" placeholder="Cant." value="${r.cant || ''}" inputmode="numeric">
                 <input type="number" class="e-cajas" placeholder="Cajas" value="${r.cajas || ''}" inputmode="numeric">
                 <input type="number" step="0.1" class="e-kg" placeholder="Kg" value="${r.kg || ''}">
-                <button type="button" class="btn-del-row">×</button>
+                <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
               `;
               container.appendChild(div);
             });
@@ -531,34 +531,25 @@
         <input type="number" class="e-cant" placeholder="Cant." inputmode="numeric">
         <input type="number" class="e-cajas" placeholder="Cajas" inputmode="numeric">
         <input type="number" step="0.1" class="e-kg" placeholder="Kg">
-        <button type="button" class="btn-del-row">×</button>
+        <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
       `;
       empaqueContainer.appendChild(nuevaFila);
       calcular();
     });
 
-    // OBTENER MINUTOS (FUNCIONA SI O SI EN ANDROID/CHROME)
+    // LECTOR DE HORA PURO (SIN CONVERSIONES QUE FALLEN)
     function obtenerMinutos(idInput) {
       const el = document.getElementById(idInput);
       if (!el || !el.value) return null;
 
-      // Intento 1: valueAsNumber
-      if (typeof el.valueAsNumber === 'number' && !isNaN(el.valueAsNumber)) {
-        return Math.floor(el.valueAsNumber / 60000);
-      }
-
-      // Intento 2: parsear los números que aparezcan en el texto
-      const numeros = el.value.match(/\d+/g);
-      if (numeros && numeros.length >= 2) {
-        let h = parseInt(numeros[0], 10);
-        let m = parseInt(numeros[1], 10);
-
-        // Si el texto incluye pm/p.m. y no es 12
-        const txt = el.value.toLowerCase();
-        if ((txt.includes('pm') || txt.includes('p.m.')) && h < 12) h += 12;
-        if ((txt.includes('am') || txt.includes('a.m.')) && h === 12) h = 0;
-
-        return h * 60 + m;
+      // El navegador entrega .value en formato "HH:MM" (estándar 24h)
+      const partes = el.value.split(':');
+      if (partes.length >= 2) {
+        const h = parseInt(partes[0], 10);
+        const m = parseInt(partes[1], 10);
+        if (!isNaN(h) && !isNaN(m)) {
+          return h * 60 + m;
+        }
       }
       return null;
     }
@@ -581,17 +572,6 @@
       const pausas = parseFloat(document.getElementById('pausas').value) || 0;
       const desfasajeMin = parseFloat(document.getElementById('desfasajeMin').value) || 0;
 
-      const cajasIni = parseFloat(document.getElementById('cajasIniciales').value) || 0;
-      const kgCajaIni = parseFloat(document.getElementById('kgCajaInicial').value) || 15;
-
-      const ceraIni = parseFloat(document.getElementById('ceraIni').value);
-      const ceraFin = parseFloat(document.getElementById('ceraFin').value);
-      const jabonIni = parseFloat(document.getElementById('jabonIni').value);
-      const jabonFin = parseFloat(document.getElementById('jabonFin').value);
-
-      const errDiv = document.getElementById('error');
-      errDiv.style.display = 'none';
-
       guardarEstado();
 
       // 1. Cadencia objetivo
@@ -602,24 +582,39 @@
         const cadTxt = `1 bin cada ${m}m ${s < 10 ? '0' : ''}${s}s`;
         document.getElementById('cadenciaObjetivo').textContent = cadTxt;
         reporte.cadenciaObj = cadTxt;
-      } else {
-        document.getElementById('cadenciaObjetivo').textContent = 'Ingresar objetivo';
-        reporte.cadenciaObj = '';
       }
 
-      // 2. Tiempos y ritmos
+      // 2. Tiempos y Ritmos
       const minIni = obtenerMinutos('horaInicio');
       const minFinRaw = obtenerMinutos('horaFin');
       let ritmoNetoVal = 0;
 
       if (minIni !== null && minFinRaw !== null) {
         let minFin = minFinRaw;
-        if (minFin < minIni) minFin += 24 * 60;
+        if (minFin < minIni) minFin += 24 * 60; // Cruce de medianoche
 
         const brutoMin = minFin - minIni;
         const netoMin = brutoMin - pausas;
 
-        if (brutoMin <= 0) {
-          limpiarRitmo();
-        } else if (netoMin <= 0) {
-          errDiv.textContent = 'Las pau
+        if (brutoMin > 0 && netoMin > 0) {
+          const rBruto = (bines / (brutoMin / 60)).toFixed(1);
+          const rNeto = (bines / (netoMin / 60)).toFixed(1);
+
+          document.getElementById('ritmoNeto').innerHTML = `${rNeto} <span class="res-unit">bin/h</span>`;
+          document.getElementById('ritmoBruto').innerHTML = `${rBruto} <span class="res-unit">bin/h</span>`;
+
+          reporte.ritmoNeto = rNeto;
+          reporte.ritmoBruto = rBruto;
+          ritmoNetoVal = parseFloat(rNeto);
+
+          // Proyección fin lote
+          const faltan = Math.max(0, totalLote - bines);
+          reporte.faltan = faltan;
+
+          if (totalLote > 0 && bines >= totalLote) {
+            document.getElementById('tituloFinEstimado').textContent = 'Lote completado';
+            document.getElementById('finEstimado').textContent = '¡Terminado!';
+          } else if (faltan > 0 && ritmoNetoVal > 0) {
+            const minFaltan = Math.round((faltan / ritmoNetoVal) * 60);
+            const finMin = (minFin + minFaltan) % (24 * 60);
+            const hFin = String(Math.floor(finMin / 60)).padStart(
