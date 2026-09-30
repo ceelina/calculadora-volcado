@@ -13,6 +13,7 @@
       --text: #1e293b;
       --muted: #64748b;
       --border: #e2e8f0;
+      --wsp: #25d366;
     }
     * {
       box-sizing: border-box;
@@ -25,7 +26,7 @@
       color: var(--text);
       display: flex;
       justify-content: center;
-      padding: 16px 12px 32px;
+      padding: 16px 12px 36px;
       min-height: 100vh;
     }
     .container {
@@ -42,11 +43,11 @@
       margin-bottom: 16px;
     }
     .brand-logo {
-      width: 80px;
-      height: 80px;
+      width: 75px;
+      height: 75px;
       object-fit: contain;
       border-radius: 50%;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
     h1 {
       font-size: 1.2rem;
@@ -110,8 +111,50 @@
     input:focus {
       border-color: var(--orange);
     }
+    .headers-empaque {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 32px;
+      gap: 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+      padding: 0 2px;
+      text-transform: uppercase;
+    }
+    .empaque-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 32px;
+      gap: 6px;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .btn-del-row {
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      border-radius: 6px;
+      width: 32px;
+      height: 36px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-add-row {
+      background: #f1f5f9;
+      color: var(--green-dark);
+      border: 1.5px dashed var(--border);
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 4px;
+      margin-bottom: 12px;
+    }
     .results {
-      margin-top: 14px;
+      margin-top: 12px;
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
@@ -127,6 +170,13 @@
       background: #f0fdf4;
       border-color: #bbf7d0;
     }
+    .res-card.full-width {
+      grid-column: span 2;
+    }
+    .res-card.target-box {
+      background: #fff7ed;
+      border-color: #fed7aa;
+    }
     .res-title {
       font-size: 0.7rem;
       color: var(--muted);
@@ -135,7 +185,7 @@
       font-weight: 700;
     }
     .res-value {
-      font-size: 1.3rem;
+      font-size: 1.25rem;
       font-weight: 800;
       color: var(--green-dark);
     }
@@ -146,6 +196,40 @@
     }
     .res-highlight {
       color: var(--orange);
+    }
+    .info-subtext {
+      font-size: 0.7rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .btn-wsp {
+      margin-top: 18px;
+      width: 100%;
+      background: var(--wsp);
+      color: white;
+      border: none;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+    }
+    .btn-clear {
+      margin-top: 8px;
+      width: 100%;
+      background: #f1f5f9;
+      color: #64748b;
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -158,17 +242,36 @@
       <div class="subtitle">El Paruco</div>
     </div>
 
-    <!-- SECCIÓN 1: TIEMPOS Y RITMO -->
+    <!-- SECCIÓN 1: OBJETIVO -->
+    <div class="section-title">🎯 Velocidad Objetivo</div>
+    <div class="grid-2 form-group">
+      <div>
+        <label for="ritmoObjetivo">Velocidad objetivo</label>
+        <input type="number" id="ritmoObjetivo" value="20" min="1" inputmode="numeric">
+      </div>
+      <div>
+        <label for="pesoBin">Peso bin (kg)</label>
+        <input type="number" id="pesoBin" value="330" inputmode="numeric">
+      </div>
+    </div>
+
+    <div class="results" style="margin-top: 4px; margin-bottom: 12px;">
+      <div class="res-card target-box full-width">
+        <div class="res-title">Para cumplir el objetivo hay que volcar:</div>
+        <div class="res-value res-highlight" id="cadenciaObjetivo">1 bin cada 3m 00s</div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 2: REGISTRO DE VOLCADO -->
     <div class="section-title">⏱️ Ritmo de Volcado</div>
-    
     <div class="grid-2 form-group">
       <div>
         <label for="bines">Bines volcados</label>
         <input type="number" id="bines" min="0" placeholder="Ej: 30" inputmode="numeric">
       </div>
       <div>
-        <label for="pesoBin">Peso bin (kg)</label>
-        <input type="number" id="pesoBin" value="330" inputmode="numeric">
+        <label for="totalLote">Total lote (bines)</label>
+        <input type="number" id="totalLote" min="0" placeholder="Ej: 80" inputmode="numeric">
       </div>
     </div>
 
@@ -196,16 +299,88 @@
         <div class="res-title">Sin pausas (neto)</div>
         <div class="res-value res-highlight" id="ritmoNeto">0.0 <span class="res-unit">bin/h</span></div>
       </div>
-
       <div class="res-card">
         <div class="res-title">Con pausas (bruto)</div>
         <div class="res-value" id="ritmoBruto">0.0 <span class="res-unit">bin/h</span></div>
       </div>
     </div>
 
-    <!-- SECCIÓN 2: INSUMOS QUÍMICOS (CERA Y JABÓN) -->
-    <div class="section-title">🧪 Consumo de Cera y Jabón (L/t)</div>
+    <!-- SECCIÓN 3: PROYECCIÓN -->
+    <div class="section-title">📈 Planificación y Cierre</div>
+    <div class="form-group">
+      <label for="horaCierreTurno">Hora fin de turno (opcional)</label>
+      <input type="time" id="horaCierreTurno">
+    </div>
 
+    <div class="results">
+      <div class="res-card">
+        <div class="res-title" id="tituloFinEstimado">Fin lote</div>
+        <div class="res-value" id="finEstimado" style="font-size: 1.05rem;">--:--</div>
+      </div>
+      <div class="res-card highlight">
+        <div class="res-title">Bines al cierre turno</div>
+        <div class="res-value res-highlight" id="proyeccionBines">-- <span class="res-unit">totales</span></div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 4: RENDIMIENTO Y EMPAQUE -->
+    <div class="section-title">📦 Empaque y % Rendimiento</div>
+    <div class="form-group">
+      <label for="desfasajeMin">Desfasaje volcado → empaque (min)</label>
+      <input type="number" id="desfasajeMin" value="10" min="0" inputmode="numeric">
+    </div>
+
+    <div class="grid-2 form-group" style="background: #fff7ed; padding: 8px; border-radius: 10px; border: 1px dashed #fed7aa;">
+      <div>
+        <label for="cajasIniciales" style="color: var(--orange);">Resto cajas inicial</label>
+        <input type="number" id="cajasIniciales" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div>
+        <label for="kgCajaInicial" style="color: var(--orange);">Kg neto/caja inicial</label>
+        <input type="number" step="0.1" id="kgCajaInicial" placeholder="15.0">
+      </div>
+    </div>
+
+    <div class="headers-empaque">
+      <span>Cant.</span>
+      <span>Cajas c/u</span>
+      <span>Kg neto</span>
+      <span></span>
+    </div>
+
+    <div id="empaqueContainer">
+      <div class="empaque-row">
+        <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
+        <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
+        <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
+        <button type="button" class="btn-del-row">×</button>
+      </div>
+    </div>
+
+    <button type="button" class="btn-add-row" id="btnAddEmpaque">➕ Agregar otro renglón (pallet, piso, bulto)</button>
+
+    <div class="results">
+      <div class="res-card highlight">
+        <div class="res-title">Rendimiento Ajustado</div>
+        <div class="res-value res-highlight" id="rendimientoPorc">0.0 <span class="res-unit">%</span></div>
+        <div class="info-subtext" id="subtextBinesAjustados">Sobre bines en empaque</div>
+      </div>
+      <div class="res-card">
+        <div class="res-title">Descarte Estimado</div>
+        <div class="res-value" id="descartePorc">0.0 <span class="res-unit">%</span></div>
+      </div>
+      <div class="res-card">
+        <div class="res-title">Cajas Netas Lote</div>
+        <div class="res-value" id="totalCajasDisplay">0 <span class="res-unit">cajas</span></div>
+      </div>
+      <div class="res-card">
+        <div class="res-title">Kg Netos Lote</div>
+        <div class="res-value" id="totalKgEmpacados">0 <span class="res-unit">kg</span></div>
+      </div>
+    </div>
+
+    <!-- SECCIÓN 5: QUÍMICOS -->
+    <div class="section-title">🧪 Consumo de Cera y Jabón (L/t)</div>
     <div class="grid-2 form-group">
       <div>
         <label for="ceraIni">Cera Inicial (L)</label>
@@ -233,23 +408,29 @@
         <div class="res-title">Consumo Cera</div>
         <div class="res-value" id="ceraTon">0.00 <span class="res-unit">L/t</span></div>
       </div>
-
       <div class="res-card">
         <div class="res-title">Consumo Jabón</div>
         <div class="res-value" id="jabonTon">0.00 <span class="res-unit">L/t</span></div>
       </div>
     </div>
 
+    <button type="button" class="btn-wsp" id="btnWhatsapp">📲 Compartir por WhatsApp</button>
+    <button type="button" class="btn-clear" id="btnClear">🗑️ Limpiar campos / Nuevo Lote</button>
   </div>
 
   <script>
     const inputs = [
-      'bines', 'pesoBin', 'horaInicio', 'horaFin', 'pausas',
+      'ritmoObjetivo', 'pesoBin', 'bines', 'totalLote', 'horaInicio', 'horaFin', 'pausas',
+      'horaCierreTurno', 'desfasajeMin', 'cajasIniciales', 'kgCajaInicial',
       'ceraIni', 'ceraFin', 'jabonIni', 'jabonFin'
     ];
+
     inputs.forEach(id => {
-      document.getElementById(id).addEventListener('input', calcular);
-      document.getElementById(id).addEventListener('change', calcular);
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', calcular);
+        el.addEventListener('change', calcular);
+      }
     });
 
     function setHoraActual() {
@@ -263,22 +444,97 @@
     setHoraActual();
     document.getElementById('btnUpdate').addEventListener('click', setHoraActual);
 
+    // DINÁMICA DE RENGLONES DE EMPAQUE
+    const empaqueContainer = document.getElementById('empaqueContainer');
+    document.getElementById('btnAddEmpaque').addEventListener('click', () => {
+      const div = document.createElement('div');
+      div.className = 'empaque-row';
+      div.innerHTML = `
+        <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
+        <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
+        <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
+        <button type="button" class="btn-del-row">×</button>
+      `;
+      empaqueContainer.appendChild(div);
+      div.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', calcular);
+        inp.addEventListener('change', calcular);
+      });
+      calcular();
+    });
+
+    empaqueContainer.addEventListener('click', (e) => {
+      if (e.target && e.target.classList.contains('btn-del-row')) {
+        const rows = empaqueContainer.querySelectorAll('.empaque-row');
+        if (rows.length > 1) {
+          e.target.closest('.empaque-row').remove();
+        } else {
+          e.target.closest('.empaque-row').querySelectorAll('input').forEach(i => i.value = '');
+        }
+        calcular();
+      }
+    });
+
+    empaqueContainer.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('input', calcular);
+      inp.addEventListener('change', calcular);
+    });
+
+    document.getElementById('btnClear').addEventListener('click', () => {
+      if (confirm('¿Reiniciar todos los campos para un nuevo lote?')) {
+        inputs.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+        document.getElementById('ritmoObjetivo').value = '20';
+        document.getElementById('pesoBin').value = '330';
+        document.getElementById('pausas').value = '0';
+        document.getElementById('desfasajeMin').value = '10';
+        empaqueContainer.innerHTML = `
+          <div class="empaque-row">
+            <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
+            <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
+            <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
+            <button type="button" class="btn-del-row">×</button>
+          </div>
+        `;
+        empaqueContainer.querySelectorAll('input').forEach(inp => {
+          inp.addEventListener('input', calcular);
+          inp.addEventListener('change', calcular);
+        });
+        setHoraActual();
+      }
+    });
+
+    let reporte = {};
+
     function calcular() {
+      const objetivo = parseFloat(document.getElementById('ritmoObjetivo').value) || 0;
       const bines = parseFloat(document.getElementById('bines').value) || 0;
       const pesoBin = parseFloat(document.getElementById('pesoBin').value) || 330;
+      const totalLote = parseFloat(document.getElementById('totalLote').value) || 0;
       const horaInicio = document.getElementById('horaInicio').value;
       const horaFin = document.getElementById('horaFin').value;
       const pausas = parseFloat(document.getElementById('pausas').value) || 0;
+      const desfasajeMin = parseFloat(document.getElementById('desfasajeMin').value) || 0;
 
       const ceraIni = parseFloat(document.getElementById('ceraIni').value);
       const ceraFin = parseFloat(document.getElementById('ceraFin').value);
       const jabonIni = parseFloat(document.getElementById('jabonIni').value);
       const jabonFin = parseFloat(document.getElementById('jabonFin').value);
 
-      // 1. CÁLCULO DE TONELADAS PROCESADAS
-      const toneladas = (bines * pesoBin) / 1000;
+      // 1. CADENCIA OBJETIVO
+      if (objetivo > 0) {
+        const seg = Math.round(3600 / objetivo);
+        const mObj = Math.floor(seg / 60);
+        const sObj = seg % 60;
+        const cadTexto = `1 bin cada ${mObj}m ${sObj < 10 ? '0' : ''}${sObj}s`;
+        document.getElementById('cadenciaObjetivo').textContent = cadTexto;
+        reporte.cadencia = cadTexto;
+      }
 
-      // 2. CÁLCULO DE RITMOS DE VOLCADO (IDÉNTICO AL PRIMER CÓDIGO)
+      // 2. RITMOS DE VOLCADO (LÓGICA SIMPLE ORIGINAL)
+      let ritmoNetoVal = 0;
       if (horaInicio && horaFin) {
         const [hIni, mIni] = horaInicio.split(':').map(Number);
         const [hFin, mFin] = horaFin.split(':').map(Number);
@@ -299,6 +555,45 @@
 
           document.getElementById('ritmoNeto').innerHTML = `${ritmoSinPausas} <span class="res-unit">bin/h</span>`;
           document.getElementById('ritmoBruto').innerHTML = `${ritmoConPausas} <span class="res-unit">bin/h</span>`;
+
+          ritmoNetoVal = parseFloat(ritmoSinPausas);
+          reporte.ritmoNeto = ritmoSinPausas;
+          reporte.ritmoBruto = ritmoConPausas;
+
+          // Proyección fin de lote
+          const faltan = Math.max(0, totalLote - bines);
+          reporte.faltan = faltan;
+
+          if (totalLote > 0 && bines >= totalLote) {
+            document.getElementById('tituloFinEstimado').textContent = 'Lote completado';
+            document.getElementById('finEstimado').textContent = '¡Terminado!';
+          } else if (faltan > 0 && ritmoNetoVal > 0) {
+            const minFaltan = Math.round((faltan / ritmoNetoVal) * 60);
+            const finEstimado = (minFin + minFaltan) % (24 * 60);
+            const hEst = String(Math.floor(finEstimado / 60)).padStart(2, '0');
+            const mEst = String(finEstimado % 60).padStart(2, '0');
+            document.getElementById('tituloFinEstimado').textContent = `Fin lote (faltan ${faltan} b)`;
+            document.getElementById('finEstimado').textContent = `${hEst}:${mEst} hs (+${Math.floor(minFaltan/60)}h ${minFaltan%60}m)`;
+          } else {
+            document.getElementById('finEstimado').textContent = '--:--';
+          }
+
+          // Proyección cierre de turno
+          const horaCierre = document.getElementById('horaCierreTurno').value;
+          if (horaCierre && ritmoNetoVal > 0) {
+            const [hCie, mCie] = horaCierre.split(':').map(Number);
+            let minCierre = hCie * 60 + mCie;
+            if (minCierre < minFin) minCierre += 24 * 60;
+            const dif = minCierre - minFin;
+            if (dif > 0) {
+              const bExtra = (dif / 60) * ritmoNetoVal;
+              document.getElementById('proyeccionBines').innerHTML = `~${Math.round(bines + bExtra)} <span class="res-unit">totales</span>`;
+            } else {
+              document.getElementById('proyeccionBines').innerHTML = `${bines} <span class="res-unit">totales</span>`;
+            }
+          } else {
+            document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
+          }
         } else {
           document.getElementById('ritmoNeto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
           document.getElementById('ritmoBruto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
@@ -308,20 +603,70 @@
         document.getElementById('ritmoBruto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
       }
 
-      // 3. CÁLCULO DE LITROS POR TONELADA (L/t)
+      // 3. EMPAQUE Y % RENDIMIENTO
+      let cajasBrutas = 0;
+      let kgBrutos = 0;
+      let detalle = [];
+
+      document.querySelectorAll('#empaqueContainer .empaque-row').forEach(row => {
+        const c = parseFloat(row.querySelector('.e-cant').value) || 0;
+        const cj = parseFloat(row.querySelector('.e-cajas').value) || 0;
+        const kg = parseFloat(row.querySelector('.e-kg').value) || 0;
+        if (c > 0 && cj > 0) {
+          cajasBrutas += (c * cj);
+          kgBrutos += (c * cj * kg);
+          detalle.push(`${c}x${cj} cj (${kg}kg)`);
+        }
+      });
+
+      const cajasIni = parseFloat(document.getElementById('cajasIniciales').value) || 0;
+      const kgIni = parseFloat(document.getElementById('kgCajaInicial').value) || 15;
+      const totalCajas = Math.max(0, cajasBrutas - cajasIni);
+      const totalKg = Math.max(0, kgBrutos - (cajasIni * kgIni));
+
+      document.getElementById('totalCajasDisplay').innerHTML = `${totalCajas} <span class="res-unit">cajas</span>`;
+      document.getElementById('totalKgEmpacados').innerHTML = `${Math.round(totalKg)} <span class="res-unit">kg</span>`;
+
+      let binesEnTransito = 0;
+      if (ritmoNetoVal > 0 && desfasajeMin > 0) {
+        binesEnTransito = ritmoNetoVal * (desfasajeMin / 60);
+      }
+      const binesEmpacables = Math.max(0, bines - binesEnTransito);
+      const kgVolcadosAjustados = binesEmpacables * pesoBin;
+
+      if (kgVolcadosAjustados > 0 && totalCajas > 0) {
+        const rend = (totalKg / kgVolcadosAjustados) * 100;
+        const desc = Math.max(0, 100 - rend);
+        document.getElementById('rendimientoPorc').innerHTML = `${rend.toFixed(1)} <span class="res-unit">%</span>`;
+        document.getElementById('descartePorc').innerHTML = `${desc.toFixed(1)} <span class="res-unit">%</span>`;
+        document.getElementById('subtextBinesAjustados').textContent = `Base: ${binesEmpacables.toFixed(1)} bines empacables`;
+
+        reporte.rendimiento = `${rend.toFixed(1)}%`;
+        reporte.descarte = `${desc.toFixed(1)}%`;
+        reporte.totalCajas = totalCajas;
+        reporte.totalKg = Math.round(totalKg);
+        reporte.detalleEmpaque = detalle.join(' + ');
+      } else {
+        document.getElementById('rendimientoPorc').innerHTML = `0.0 <span class="res-unit">%</span>`;
+        document.getElementById('descartePorc').innerHTML = `0.0 <span class="res-unit">%</span>`;
+        document.getElementById('subtextBinesAjustados').textContent = `Sobre bines en empaque`;
+      }
+
+      // 4. QUÍMICOS (L/t)
+      const toneladas = (bines * pesoBin) / 1000;
       if (toneladas > 0) {
         if (!isNaN(ceraIni) && !isNaN(ceraFin) && ceraIni >= ceraFin) {
-          const lCera = ceraIni - ceraFin;
-          const lPorTonCera = (lCera / toneladas).toFixed(2);
+          const lPorTonCera = ((ceraIni - ceraFin) / toneladas).toFixed(2);
           document.getElementById('ceraTon').innerHTML = `${lPorTonCera} <span class="res-unit">L/t</span>`;
+          reporte.cera = lPorTonCera;
         } else {
           document.getElementById('ceraTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
         }
 
         if (!isNaN(jabonIni) && !isNaN(jabonFin) && jabonIni >= jabonFin) {
-          const lJabon = jabonIni - jabonFin;
-          const lPorTonJabon = (lJabon / toneladas).toFixed(2);
+          const lPorTonJabon = ((jabonIni - jabonFin) / toneladas).toFixed(2);
           document.getElementById('jabonTon').innerHTML = `${lPorTonJabon} <span class="res-unit">L/t</span>`;
+          reporte.jabon = lPorTonJabon;
         } else {
           document.getElementById('jabonTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
         }
@@ -330,6 +675,32 @@
         document.getElementById('jabonTon').innerHTML = `0.00 <span class="res-unit">L/t</span>`;
       }
     }
+
+    // WHATSAPP
+    document.getElementById('btnWhatsapp').addEventListener('click', () => {
+      const hoy = new Date();
+      const fecha = `${String(hoy.getDate()).padStart(2,'0')}/${String(hoy.getMonth()+1).padStart(2,'0')}/${hoy.getFullYear()}`;
+      const bines = document.getElementById('bines').value || 0;
+      const tot = document.getElementById('totalLote').value;
+      const loteTxt = tot ? `${bines} / ${tot} (Faltan: ${reporte.faltan || 0})` : `${bines}`;
+
+      let msg = `🍊 *REPORTE DE VOLCADO Y EMPAQUE - EL PARUCO* 🍊\n`;
+      msg += `📅 *Fecha:* ${fecha}\n\n`;
+      msg += `📦 *Bines volcados:* ${loteTxt}\n`;
+      msg += `⏱ *Horario:* ${document.getElementById('horaInicio').value || '--:--'} a ${document.getElementById('horaFin').value || '--:--'} (Pausas: ${document.getElementById('pausas').value || 0} min)\n`;
+      msg += `⚡ *Ritmo neto:* ${reporte.ritmoNeto || '0.0'} bin/h\n`;
+      msg += `⚡ *Ritmo bruto:* ${reporte.ritmoBruto || '0.0'} bin/h\n`;
+      if (reporte.cadencia) msg += `🎯 *Cadencia:* ${reporte.cadencia}\n`;
+      if (reporte.rendimiento) {
+        msg += `\n📦 *Empaque y Rendimiento:*\n`;
+        msg += `• Cajas netas: ${reporte.totalCajas} (${reporte.totalKg} kg)\n`;
+        msg += `• Rendimiento: ${reporte.rendimiento} | Descarte: ${reporte.descarte}\n`;
+      }
+      if (reporte.cera || reporte.jabon) {
+        msg += `\n🧪 *Químicos:*\n• Cera: ${reporte.cera || '0.00'} L/t\n• Jabón: ${reporte.jabon || '0.00'} L/t\n`;
+      }
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+    });
   </script>
 </body>
 </html>
