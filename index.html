@@ -14,7 +14,6 @@
       --muted: #64748b;
       --border: #e2e8f0;
       --wsp: #25d366;
-      --wsp-dark: #128c7e;
     }
     * {
       box-sizing: border-box;
@@ -145,9 +144,6 @@
       justify-content: center;
       align-items: center;
     }
-    .btn-del-row:active {
-      background: #fca5a5;
-    }
     .btn-add-row {
       background: #f1f5f9;
       color: var(--green-dark);
@@ -160,9 +156,6 @@
       width: 100%;
       margin-top: 4px;
       margin-bottom: 12px;
-    }
-    .btn-add-row:active {
-      background: #e2e8f0;
     }
     .results {
       margin-top: 10px;
@@ -252,11 +245,6 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 6px;
-    }
-    .btn-clear:active {
-      background: #fee2e2;
-      color: #dc2626;
     }
   </style>
 </head>
@@ -269,7 +257,7 @@
       <div class="subtitle">El Paruco</div>
     </div>
 
-    <!-- SECCIÓN 1: OBJETIVO Y PARÁMETROS -->
+    <!-- SECCIÓN 1: OBJETIVO -->
     <div class="section-title">🎯 Velocidad Objetivo</div>
     <div class="grid-2 form-group">
       <div>
@@ -289,7 +277,7 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 2: REGISTRO DE VOLCADO REAL -->
+    <!-- SECCIÓN 2: REGISTRO REAL -->
     <div class="section-title">⏱️ Registro de Volcado</div>
 
     <div class="grid-2 form-group">
@@ -355,7 +343,7 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 4: RENDIMIENTO CON DESFASAJE, PESOS VARIABLES Y DESCUENTO INICIAL -->
+    <!-- SECCIÓN 4: RENDIMIENTO -->
     <div class="section-title">📦 Empaque y % Rendimiento</div>
 
     <div class="form-group">
@@ -386,13 +374,13 @@
         <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
         <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
         <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
-        <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
+        <button type="button" class="btn-del-row">×</button>
       </div>
       <div class="empaque-row">
         <input type="number" class="e-cant" placeholder="Ej: 3" inputmode="numeric">
         <input type="number" class="e-cajas" placeholder="Ej: 11" inputmode="numeric">
         <input type="number" step="0.1" class="e-kg" placeholder="Ej: 10.0">
-        <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
+        <button type="button" class="btn-del-row">×</button>
       </div>
     </div>
 
@@ -453,7 +441,6 @@
       </div>
     </div>
 
-    <!-- BOTONES PRINCIPALES -->
     <button type="button" class="btn-wsp" id="btnWhatsapp">
       📲 Compartir por WhatsApp
     </button>
@@ -474,9 +461,7 @@
       camposPersistentes.forEach(id => {
         const val = localStorage.getItem('paruco_' + id);
         const el = document.getElementById(id);
-        if (val !== null && el) {
-          el.value = val;
-        }
+        if (val !== null && el) el.value = val;
       });
 
       const empaqueData = localStorage.getItem('paruco_empaqueRows');
@@ -493,13 +478,9 @@
                 <input type="number" class="e-cant" placeholder="Cant." value="${r.cant || ''}" inputmode="numeric">
                 <input type="number" class="e-cajas" placeholder="Cajas" value="${r.cajas || ''}" inputmode="numeric">
                 <input type="number" step="0.1" class="e-kg" placeholder="Kg" value="${r.kg || ''}">
-                <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
+                <button type="button" class="btn-del-row">×</button>
               `;
               container.appendChild(div);
-              div.querySelectorAll('input').forEach(inp => {
-                inp.addEventListener('input', calcular);
-                inp.addEventListener('change', calcular);
-              });
             });
           }
         } catch(e) {}
@@ -509,9 +490,7 @@
     function guardarEstado() {
       camposPersistentes.forEach(id => {
         const el = document.getElementById(id);
-        if (el) {
-          localStorage.setItem('paruco_' + id, el.value);
-        }
+        if (el) localStorage.setItem('paruco_' + id, el.value);
       });
 
       const empaqueRows = [];
@@ -526,49 +505,9 @@
     }
 
     document.getElementById('btnClear').addEventListener('click', () => {
-      if (confirm('¿Deseas limpiar todos los campos para iniciar un nuevo lote?')) {
-        camposPersistentes.forEach(id => {
-          localStorage.removeItem('paruco_' + id);
-        });
-        localStorage.removeItem('paruco_empaqueRows');
-
-        document.getElementById('ritmoObjetivo').value = '20';
-        document.getElementById('pesoBin').value = '330';
-        document.getElementById('bines').value = '';
-        document.getElementById('totalLote').value = '';
-        document.getElementById('horaInicio').value = '';
-        document.getElementById('pausas').value = '0';
-        document.getElementById('desfasajeMin').value = '10';
-        document.getElementById('horaCierreTurno').value = '';
-        document.getElementById('cajasIniciales').value = '';
-        document.getElementById('kgCajaInicial').value = '';
-        document.getElementById('ceraIni').value = '';
-        document.getElementById('ceraFin').value = '';
-        document.getElementById('jabonIni').value = '';
-        document.getElementById('jabonFin').value = '';
-
-        const container = document.getElementById('empaqueContainer');
-        container.innerHTML = `
-          <div class="empaque-row">
-            <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
-            <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
-            <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
-            <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
-          </div>
-          <div class="empaque-row">
-            <input type="number" class="e-cant" placeholder="Ej: 3" inputmode="numeric">
-            <input type="number" class="e-cajas" placeholder="Ej: 11" inputmode="numeric">
-            <input type="number" step="0.1" class="e-kg" placeholder="Ej: 10.0">
-            <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
-          </div>
-        `;
-        container.querySelectorAll('input').forEach(inp => {
-          inp.addEventListener('input', calcular);
-          inp.addEventListener('change', calcular);
-        });
-
-        setHoraActual();
-        calcular();
+      if (confirm('¿Deseas reiniciar para un nuevo lote?')) {
+        localStorage.clear();
+        location.reload();
       }
     });
 
@@ -578,12 +517,10 @@
         const filas = empaqueContainer.querySelectorAll('.empaque-row');
         if (filas.length > 1) {
           e.target.closest('.empaque-row').remove();
-          calcular();
         } else {
-          const inputs = e.target.closest('.empaque-row').querySelectorAll('input');
-          inputs.forEach(inp => inp.value = '');
-          calcular();
+          e.target.closest('.empaque-row').querySelectorAll('input').forEach(i => i.value = '');
         }
+        calcular();
       }
     });
 
@@ -594,22 +531,95 @@
         <input type="number" class="e-cant" placeholder="Cant." inputmode="numeric">
         <input type="number" class="e-cajas" placeholder="Cajas" inputmode="numeric">
         <input type="number" step="0.1" class="e-kg" placeholder="Kg">
-        <button type="button" class="btn-del-row" title="Eliminar fila">×</button>
+        <button type="button" class="btn-del-row">×</button>
       `;
       empaqueContainer.appendChild(nuevaFila);
-
-      nuevaFila.querySelectorAll('input').forEach(inp => {
-        inp.addEventListener('input', calcular);
-        inp.addEventListener('change', calcular);
-      });
       calcular();
     });
 
-    // LECTOR DEFINITIVO Y BLINDADO DE MINUTOS DE UN INPUT TIME
+    // OBTENER MINUTOS (FUNCIONA SI O SI EN ANDROID/CHROME)
     function obtenerMinutos(idInput) {
       const el = document.getElementById(idInput);
-      if (!el) return null;
+      if (!el || !el.value) return null;
 
-      // 1. Método nativo del navegador (milisegundos desde medianoche)
+      // Intento 1: valueAsNumber
       if (typeof el.valueAsNumber === 'number' && !isNaN(el.valueAsNumber)) {
-        return Math.floor(el.valu
+        return Math.floor(el.valueAsNumber / 60000);
+      }
+
+      // Intento 2: parsear los números que aparezcan en el texto
+      const numeros = el.value.match(/\d+/g);
+      if (numeros && numeros.length >= 2) {
+        let h = parseInt(numeros[0], 10);
+        let m = parseInt(numeros[1], 10);
+
+        // Si el texto incluye pm/p.m. y no es 12
+        const txt = el.value.toLowerCase();
+        if ((txt.includes('pm') || txt.includes('p.m.')) && h < 12) h += 12;
+        if ((txt.includes('am') || txt.includes('a.m.')) && h === 12) h = 0;
+
+        return h * 60 + m;
+      }
+      return null;
+    }
+
+    function setHoraActual() {
+      const ahora = new Date();
+      const h = String(ahora.getHours()).padStart(2, '0');
+      const m = String(ahora.getMinutes()).padStart(2, '0');
+      document.getElementById('horaFin').value = `${h}:${m}`;
+      calcular();
+    }
+
+    let reporte = {};
+
+    function calcular() {
+      const objetivo = parseFloat(document.getElementById('ritmoObjetivo').value) || 0;
+      const pesoBin = parseFloat(document.getElementById('pesoBin').value) || 330;
+      const bines = parseFloat(document.getElementById('bines').value) || 0;
+      const totalLote = parseFloat(document.getElementById('totalLote').value) || 0;
+      const pausas = parseFloat(document.getElementById('pausas').value) || 0;
+      const desfasajeMin = parseFloat(document.getElementById('desfasajeMin').value) || 0;
+
+      const cajasIni = parseFloat(document.getElementById('cajasIniciales').value) || 0;
+      const kgCajaIni = parseFloat(document.getElementById('kgCajaInicial').value) || 15;
+
+      const ceraIni = parseFloat(document.getElementById('ceraIni').value);
+      const ceraFin = parseFloat(document.getElementById('ceraFin').value);
+      const jabonIni = parseFloat(document.getElementById('jabonIni').value);
+      const jabonFin = parseFloat(document.getElementById('jabonFin').value);
+
+      const errDiv = document.getElementById('error');
+      errDiv.style.display = 'none';
+
+      guardarEstado();
+
+      // 1. Cadencia objetivo
+      if (objetivo > 0) {
+        const seg = Math.round(3600 / objetivo);
+        const m = Math.floor(seg / 60);
+        const s = seg % 60;
+        const cadTxt = `1 bin cada ${m}m ${s < 10 ? '0' : ''}${s}s`;
+        document.getElementById('cadenciaObjetivo').textContent = cadTxt;
+        reporte.cadenciaObj = cadTxt;
+      } else {
+        document.getElementById('cadenciaObjetivo').textContent = 'Ingresar objetivo';
+        reporte.cadenciaObj = '';
+      }
+
+      // 2. Tiempos y ritmos
+      const minIni = obtenerMinutos('horaInicio');
+      const minFinRaw = obtenerMinutos('horaFin');
+      let ritmoNetoVal = 0;
+
+      if (minIni !== null && minFinRaw !== null) {
+        let minFin = minFinRaw;
+        if (minFin < minIni) minFin += 24 * 60;
+
+        const brutoMin = minFin - minIni;
+        const netoMin = brutoMin - pausas;
+
+        if (brutoMin <= 0) {
+          limpiarRitmo();
+        } else if (netoMin <= 0) {
+          errDiv.textContent = 'Las pau
