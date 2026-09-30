@@ -445,7 +445,7 @@
       📲 Compartir por WhatsApp
     </button>
     <button type="button" class="btn-clear" id="btnClear">
-      🗑️ Limpiar campos / Nuevo Lote
+      🗑️️ Limpiar campos / Nuevo Lote
     </button>
 
   </div>
@@ -537,20 +537,36 @@
       calcular();
     });
 
-    // LECTOR DE HORA PURO (SIN CONVERSIONES QUE FALLEN)
-    function obtenerMinutos(idInput) {
+    // CONVERSOR DE HORA UNIVERSAL
+    function convertirAHoraMinutos(idInput) {
       const el = document.getElementById(idInput);
       if (!el || !el.value) return null;
 
-      // El navegador entrega .value en formato "HH:MM" (estándar 24h)
-      const partes = el.value.split(':');
+      const valor = el.value.trim().toLowerCase();
+
+      // Caso 1: API nativa con formato 24h directo "06:00"
+      const partes = valor.split(':');
       if (partes.length >= 2) {
-        const h = parseInt(partes[0], 10);
-        const m = parseInt(partes[1], 10);
+        let h = parseInt(partes[0], 10);
+        let m = parseInt(partes[1], 10);
         if (!isNaN(h) && !isNaN(m)) {
+          // Manejo por si trae am/pm
+          if ((valor.includes('pm') || valor.includes('p.m.')) && h < 12) h += 12;
+          if ((valor.includes('am') || valor.includes('a.m.')) && h === 12) h = 0;
           return h * 60 + m;
         }
       }
+
+      // Caso 2: Extracción numérica
+      const nums = valor.match(/\d+/g);
+      if (nums && nums.length >= 2) {
+        let h = parseInt(nums[0], 10);
+        let m = parseInt(nums[1], 10);
+        if ((valor.includes('pm') || valor.includes('p.m.')) && h < 12) h += 12;
+        if ((valor.includes('am') || valor.includes('a.m.')) && h === 12) h = 0;
+        return h * 60 + m;
+      }
+
       return null;
     }
 
@@ -585,8 +601,8 @@
       }
 
       // 2. Tiempos y Ritmos
-      const minIni = obtenerMinutos('horaInicio');
-      const minFinRaw = obtenerMinutos('horaFin');
+      const minIni = convertirAHoraMinutos('horaInicio');
+      const minFinRaw = convertirAHoraMinutos('horaFin');
       let ritmoNetoVal = 0;
 
       if (minIni !== null && minFinRaw !== null) {
@@ -605,16 +621,4 @@
 
           reporte.ritmoNeto = rNeto;
           reporte.ritmoBruto = rBruto;
-          ritmoNetoVal = parseFloat(rNeto);
-
-          // Proyección fin lote
-          const faltan = Math.max(0, totalLote - bines);
-          reporte.faltan = faltan;
-
-          if (totalLote > 0 && bines >= totalLote) {
-            document.getElementById('tituloFinEstimado').textContent = 'Lote completado';
-            document.getElementById('finEstimado').textContent = '¡Terminado!';
-          } else if (faltan > 0 && ritmoNetoVal > 0) {
-            const minFaltan = Math.round((faltan / ritmoNetoVal) * 60);
-            const finMin = (minFin + minFaltan) % (24 * 60);
-            const hFin = String(Math.floor(finMin / 60)).padStart(
+          ritmoNet
