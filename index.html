@@ -262,7 +262,7 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 2: REGISTRO DE VOLCADO (FORMATO BASE ORIGINAL) -->
+    <!-- SECCIÓN 2: REGISTRO DE VOLCADO -->
     <div class="section-title">⏱️ Ritmo de Volcado</div>
     <div class="grid-2 form-group">
       <div>
@@ -419,13 +419,17 @@
   </div>
 
   <script>
-    // PARSEO DE HORAS EXACTO Y SEGURO (Funciona en todos los navegadores)
-    function parsearMinutos(horaStr) {
-      if (!horaStr) return null;
-      const partes = horaStr.split(':');
-      if (partes.length < 2) return null;
-      const h = parseInt(partes[0], 10);
-      const m = parseInt(partes[1], 10);
+    // LECTOR DE HORA BLINDADO CONTRA CUALQUIER LOCALIZACIÓN DE ANDROID
+    function parsearMinutos(val) {
+      if (!val) return null;
+      const str = String(val).trim();
+      const nums = str.match(/\d+/g);
+      if (!nums || nums.length < 2) return null;
+      let h = parseInt(nums[0], 10);
+      let m = parseInt(nums[1], 10);
+      const lower = str.toLowerCase();
+      if ((lower.includes('pm') || lower.includes('p.m.')) && h < 12) h += 12;
+      if ((lower.includes('am') || lower.includes('a.m.')) && h === 12) h = 0;
       if (isNaN(h) || isNaN(m)) return null;
       return h * 60 + m;
     }
@@ -478,6 +482,18 @@
           else if (i.id === 'desfasajeMin') i.value = '10';
           else i.value = '';
         });
+        empaqueContainer.innerHTML = `
+          <div class="empaque-row">
+            <input type="number" class="e-cant" placeholder="Ej: 10" inputmode="numeric">
+            <input type="number" class="e-cajas" placeholder="Ej: 88" inputmode="numeric">
+            <input type="number" step="0.1" class="e-kg" placeholder="Ej: 15.0">
+            <button type="button" class="btn-del-row">×</button>
+          </div>
+        `;
+        empaqueContainer.querySelectorAll('input').forEach(inp => {
+          inp.addEventListener('input', calcular);
+          inp.addEventListener('change', calcular);
+        });
         setHoraActual();
       }
     });
@@ -505,7 +521,7 @@
         rep.cadencia = cadTexto;
       }
 
-      // 2. RITMOS DE VOLCADO (LÓGICA PURA Y BLINDADA)
+      // 2. RITMOS DE VOLCADO (10% AISLADO Y BLINDADO)
       let ritmoNetoVal = 0;
       const minInicio = parsearMinutos(horaInicio);
       const minFinRaw = parsearMinutos(horaFin);
@@ -550,7 +566,7 @@
             document.getElementById('finEstimado').textContent = '--:--';
           }
 
-          // Proyección cierre de turno (Opcional)
+          // Proyección cierre de turno
           const horaCierre = document.getElementById('horaCierreTurno').value;
           const minCierreRaw = parsearMinutos(horaCierre);
           if (minCierreRaw !== null && ritmoNetoVal > 0) {
@@ -566,14 +582,4 @@
           } else {
             document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
           }
-        } else {
-          document.getElementById('ritmoNeto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
-          document.getElementById('ritmoBruto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
-          document.getElementById('finEstimado').textContent = '--:--';
-          document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>`;
-        }
-      } else {
-        document.getElementById('ritmoNeto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
-        document.getElementById('ritmoBruto').innerHTML = `0.0 <span class="res-unit">bin/h</span>`;
-        document.getElementById('finEstimado').textContent = '--:--';
-        document.getElementById('proyeccionBines').innerHTML = `-- <span class="res-unit">totales</span>
+     
