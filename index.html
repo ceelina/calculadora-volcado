@@ -269,7 +269,7 @@
       </div>
     </div>
 
-    <!-- SECCIÓN 2: REGISTRO DE VOLCADO (FORMATO DE HORA ORIGINAL) -->
+    <!-- SECCIÓN 2: REGISTRO DE VOLCADO -->
     <div class="section-title">⏱️ Registro de Volcado</div>
 
     <div class="grid-2 form-group">
@@ -435,15 +435,20 @@
   </div>
 
   <script>
-    // MANEJO DE MINUTOS SIMPLE (COMO FUNCIONABA AL COMIENZO)
+    // PARSER EXTRAE NÚMEROS A PRUEBA DE TODO (AM, PM, CON O SIN PUNTOS)
     function aMinutos(val) {
       if (!val) return null;
-      const partes = String(val).split(':');
-      if (partes.length < 2) return null;
-      const h = parseInt(partes[0], 10);
-      const m = parseInt(partes[1], 10);
-      if (isNaN(h) || isNaN(m)) return null;
-      return h * 60 + m;
+      const str = String(val).trim().toLowerCase();
+      const m = str.match(/(\d{1,2}):(\d{2})/);
+      if (!m) return null;
+      let h = parseInt(m[1], 10);
+      let min = parseInt(m[2], 10);
+      if (str.includes('pm') || str.includes('p.m.')) {
+        if (h < 12) h += 12;
+      } else if (str.includes('am') || str.includes('a.m.')) {
+        if (h === 12) h = 0;
+      }
+      return h * 60 + min;
     }
 
     function setHoraActual() {
@@ -454,7 +459,7 @@
       calcular();
     }
 
-    // PERSISTENCIA SIMPLE
+    // PERSISTENCIA SIMPLE CON TRY-CATCH
     const ids = [
       'ritmoObjetivo', 'pesoBin', 'bines', 'totalLote', 
       'horaInicio', 'pausas', 'desfasajeMin', 'horaCierreTurno',
@@ -462,15 +467,15 @@
     ];
 
     function cargarDatos() {
-      ids.forEach(id => {
-        const guardado = localStorage.getItem('p_' + id);
-        const el = document.getElementById(id);
-        if (guardado !== null && el) el.value = guardado;
-      });
+      try {
+        ids.forEach(id => {
+          const guardado = localStorage.getItem('p_' + id);
+          const el = document.getElementById(id);
+          if (guardado !== null && el) el.value = guardado;
+        });
 
-      const empaqueData = localStorage.getItem('p_empaque');
-      if (empaqueData) {
-        try {
+        const empaqueData = localStorage.getItem('p_empaque');
+        if (empaqueData) {
           const filas = JSON.parse(empaqueData);
           if (Array.isArray(filas) && filas.length > 0) {
             const container = document.getElementById('empaqueContainer');
@@ -487,28 +492,29 @@
               container.appendChild(div);
             });
           }
-        } catch(e) {}
-      }
+        }
+      } catch(e) {}
     }
 
     function guardarDatos() {
-      ids.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) localStorage.setItem('p_' + id, el.value);
-      });
-
-      const filas = [];
-      document.querySelectorAll('#empaqueContainer .empaque-row').forEach(row => {
-        filas.push({
-          c: row.querySelector('.e-cant').value,
-          cj: row.querySelector('.e-cajas').value,
-          kg: row.querySelector('.e-kg').value
+      try {
+        ids.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) localStorage.setItem('p_' + id, el.value);
         });
-      });
-      localStorage.setItem('p_empaque', JSON.stringify(filas));
+
+        const filas = [];
+        document.querySelectorAll('#empaqueContainer .empaque-row').forEach(row => {
+          filas.push({
+            c: row.querySelector('.e-cant').value,
+            cj: row.querySelector('.e-cajas').value,
+            kg: row.querySelector('.e-kg').value
+          });
+        });
+        localStorage.setItem('p_empaque', JSON.stringify(filas));
+      } catch(e) {}
     }
 
-    // AGREGAR Y ELIMINAR FILAS
     document.getElementById('btnAddEmpaque').addEventListener('click', () => {
       const c = document.getElementById('empaqueContainer');
       const d = document.createElement('div');
@@ -541,7 +547,6 @@
 
     document.getElementById('btnUpdate').addEventListener('click', setHoraActual);
 
-    // FUNCIÓN DE CÁLCULO PRINCIPAL
     let rep = {};
 
     function calcular() {
@@ -563,52 +568,46 @@
         rep.cadencia = `1 bin cada ${m}m ${s < 10 ? '0' : ''}${s}s`;
       }
 
-      // 2. Tiempos y Ritmos
-      const tIni = aMinutos(document.getElementById('horaInicio').value);
-      const tFin = aMinutos(document.getElementById('horaFin').value);
+      // 2. RITMOS DE VOLCADO (AISLADO PARA QUE NADA LO FRENE)
       let rNetoNum = 0;
+      try {
+        const tIni = aMinutos(document.getElementById('horaInicio').value);
+        const tFin = aMinutos(document.getElementById('horaFin').value);
 
-      if (tIni !== null && tFin !== null) {
-        let fin = tFin;
-        if (fin < tIni) fin += 24 * 60;
+        if (tIni !== null && tFin !== null) {
+          let fin = tFin;
+          if (fin < tIni) fin += 24 * 60;
 
-        const tBruto = fin - tIni;
-        const tNeto = tBruto - pausas;
+          const tBruto = fin - tIni;
+          const tNeto = tBruto - pausas;
 
-        if (tBruto > 0 && tNeto > 0) {
-          const rBruto = (bines / (tBruto / 60)).toFixed(1);
-          const rNeto = (bines / (tNeto / 60)).toFixed(1);
+          if (tBruto > 0 && tNeto > 0) {
+            const rBruto = (bines / (tBruto / 60)).toFixed(1);
+            const rNeto = (bines / (tNeto / 60)).toFixed(1);
 
-          document.getElementById('ritmoNeto').innerHTML = `${rNeto} <span class="res-unit">bin/h</span>`;
-          document.getElementById('ritmoBruto').innerHTML = `${rBruto} <span class="res-unit">bin/h</span>`;
+            document.getElementById('ritmoNeto').innerHTML = `${rNeto} <span class="res-unit">bin/h</span>`;
+            document.getElementById('ritmoBruto').innerHTML = `${rBruto} <span class="res-unit">bin/h</span>`;
 
-          rNetoNum = parseFloat(rNeto);
-          rep.rNeto = rNeto;
-          rep.rBruto = rBruto;
+            rNetoNum = parseFloat(rNeto);
+            rep.rNeto = rNeto;
+            rep.rBruto = rBruto;
 
-          // Fin lote
-          const faltan = Math.max(0, totalLote - bines);
-          rep.faltan = faltan;
+            // Fin estimado de lote
+            const faltan = Math.max(0, totalLote - bines);
+            rep.faltan = faltan;
 
-          if (totalLote > 0 && bines >= totalLote) {
-            document.getElementById('tituloFinEstimado').textContent = 'Lote completado';
-            document.getElementById('finEstimado').textContent = '¡Terminado!';
-          } else if (faltan > 0 && rNetoNum > 0) {
-            const minFaltan = Math.round((faltan / rNetoNum) * 60);
-            const finEstimadoMin = (fin + minFaltan) % (24 * 60);
-            const hF = String(Math.floor(finEstimadoMin / 60)).padStart(2, '0');
-            const mF = String(finEstimadoMin % 60).padStart(2, '0');
-            document.getElementById('tituloFinEstimado').textContent = `Fin lote (faltan ${faltan} b)`;
-            document.getElementById('finEstimado').textContent = `${hF}:${mF} hs (+${Math.floor(minFaltan/60)}h ${minFaltan%60}m)`;
-          } else {
-            document.getElementById('finEstimado').textContent = '--:--';
-          }
+            if (totalLote > 0 && bines >= totalLote) {
+              document.getElementById('tituloFinEstimado').textContent = 'Lote completado';
+              document.getElementById('finEstimado').textContent = '¡Terminado!';
+            } else if (faltan > 0 && rNetoNum > 0) {
+              const minFaltan = Math.round((faltan / rNetoNum) * 60);
+              const finEstimadoMin = (fin + minFaltan) % (24 * 60);
+              const hF = String(Math.floor(finEstimadoMin / 60)).padStart(2, '0');
+              const mF = String(finEstimadoMin % 60).padStart(2, '0');
+              document.getElementById('tituloFinEstimado').textContent = `Fin lote (faltan ${faltan} b)`;
+              document.getElementById('finEstimado').textContent = `${hF}:${mF} hs (+${Math.floor(minFaltan/60)}h ${minFaltan%60}m)`;
+            } else {
+              document.getElementById('finEstimado').textContent = '--:--';
+            }
 
-          // Cierre turno
-          const tCierre = aMinutos(document.getElementById('horaCierreTurno').value);
-          if (tCierre !== null && rNetoNum > 0) {
-            let cie = tCierre;
-            if (cie < fin) cie += 24 * 60;
-            const dif = cie - fin;
-            if (dif > 0) {
-              const bTot = Math.round(bines + (d
+            // Proyección cierre de turno (COMPLETAMENTE
