@@ -429,26 +429,21 @@
       📲 Compartir por WhatsApp
     </button>
     <button type="button" class="btn-clear" id="btnClear">
-      🗑️ Limpiar campos / Nuevo Lote
+      🗑️️ Limpiar campos / Nuevo Lote
     </button>
 
   </div>
 
   <script>
-    // PARSER EXTRAE NÚMEROS A PRUEBA DE TODO (AM, PM, CON O SIN PUNTOS)
+    // PARSEO DE HORA COMO EN EL CÓDIGO ORIGINAL
     function aMinutos(val) {
       if (!val) return null;
-      const str = String(val).trim().toLowerCase();
-      const m = str.match(/(\d{1,2}):(\d{2})/);
-      if (!m) return null;
-      let h = parseInt(m[1], 10);
-      let min = parseInt(m[2], 10);
-      if (str.includes('pm') || str.includes('p.m.')) {
-        if (h < 12) h += 12;
-      } else if (str.includes('am') || str.includes('a.m.')) {
-        if (h === 12) h = 0;
-      }
-      return h * 60 + min;
+      const partes = String(val).split(':');
+      if (partes.length < 2) return null;
+      const h = parseInt(partes[0], 10);
+      const m = parseInt(partes[1], 10);
+      if (isNaN(h) || isNaN(m)) return null;
+      return h * 60 + m;
     }
 
     function setHoraActual() {
@@ -459,23 +454,22 @@
       calcular();
     }
 
-    // PERSISTENCIA SIMPLE CON TRY-CATCH
     const ids = [
       'ritmoObjetivo', 'pesoBin', 'bines', 'totalLote', 
-      'horaInicio', 'pausas', 'desfasajeMin', 'horaCierreTurno',
+      'horaInicio', 'horaFin', 'pausas', 'desfasajeMin', 'horaCierreTurno',
       'cajasIniciales', 'kgCajaInicial', 'ceraIni', 'ceraFin', 'jabonIni', 'jabonFin'
     ];
 
     function cargarDatos() {
-      try {
-        ids.forEach(id => {
-          const guardado = localStorage.getItem('p_' + id);
-          const el = document.getElementById(id);
-          if (guardado !== null && el) el.value = guardado;
-        });
+      ids.forEach(id => {
+        const guardado = localStorage.getItem('p_' + id);
+        const el = document.getElementById(id);
+        if (guardado !== null && el) el.value = guardado;
+      });
 
-        const empaqueData = localStorage.getItem('p_empaque');
-        if (empaqueData) {
+      const empaqueData = localStorage.getItem('p_empaque');
+      if (empaqueData) {
+        try {
           const filas = JSON.parse(empaqueData);
           if (Array.isArray(filas) && filas.length > 0) {
             const container = document.getElementById('empaqueContainer');
@@ -490,29 +484,31 @@
                 <button type="button" class="btn-del-row" title="Eliminar">×</button>
               `;
               container.appendChild(div);
+              div.querySelectorAll('input').forEach(inp => {
+                inp.addEventListener('input', calcular);
+                inp.addEventListener('change', calcular);
+              });
             });
           }
-        }
-      } catch(e) {}
+        } catch(e) {}
+      }
     }
 
     function guardarDatos() {
-      try {
-        ids.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) localStorage.setItem('p_' + id, el.value);
-        });
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) localStorage.setItem('p_' + id, el.value);
+      });
 
-        const filas = [];
-        document.querySelectorAll('#empaqueContainer .empaque-row').forEach(row => {
-          filas.push({
-            c: row.querySelector('.e-cant').value,
-            cj: row.querySelector('.e-cajas').value,
-            kg: row.querySelector('.e-kg').value
-          });
+      const filas = [];
+      document.querySelectorAll('#empaqueContainer .empaque-row').forEach(row => {
+        filas.push({
+          c: row.querySelector('.e-cant').value,
+          cj: row.querySelector('.e-cajas').value,
+          kg: row.querySelector('.e-kg').value
         });
-        localStorage.setItem('p_empaque', JSON.stringify(filas));
-      } catch(e) {}
+      });
+      localStorage.setItem('p_empaque', JSON.stringify(filas));
     }
 
     document.getElementById('btnAddEmpaque').addEventListener('click', () => {
@@ -526,6 +522,10 @@
         <button type="button" class="btn-del-row" title="Eliminar">×</button>
       `;
       c.appendChild(d);
+      d.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', calcular);
+        inp.addEventListener('change', calcular);
+      });
       calcular();
     });
 
@@ -559,7 +559,7 @@
       const pausas = parseFloat(document.getElementById('pausas').value) || 0;
       const desfasaje = parseFloat(document.getElementById('desfasajeMin').value) || 0;
 
-      // 1. Cadencia objetivo
+      // 1. Cadencia
       if (obj > 0) {
         const seg = Math.round(3600 / obj);
         const m = Math.floor(seg / 60);
@@ -568,46 +568,46 @@
         rep.cadencia = `1 bin cada ${m}m ${s < 10 ? '0' : ''}${s}s`;
       }
 
-      // 2. RITMOS DE VOLCADO (AISLADO PARA QUE NADA LO FRENE)
+      // 2. RITMOS (CÁLCULO PURO DIRECTO)
+      const tIni = aMinutos(document.getElementById('horaInicio').value);
+      const tFin = aMinutos(document.getElementById('horaFin').value);
       let rNetoNum = 0;
-      try {
-        const tIni = aMinutos(document.getElementById('horaInicio').value);
-        const tFin = aMinutos(document.getElementById('horaFin').value);
 
-        if (tIni !== null && tFin !== null) {
-          let fin = tFin;
-          if (fin < tIni) fin += 24 * 60;
+      if (tIni !== null && tFin !== null) {
+        let fin = tFin;
+        if (fin < tIni) fin += 24 * 60; // Cruce de medianoche
 
-          const tBruto = fin - tIni;
-          const tNeto = tBruto - pausas;
+        const tBruto = fin - tIni;
+        const tNeto = tBruto - pausas;
 
-          if (tBruto > 0 && tNeto > 0) {
-            const rBruto = (bines / (tBruto / 60)).toFixed(1);
-            const rNeto = (bines / (tNeto / 60)).toFixed(1);
+        if (tBruto > 0 && tNeto > 0) {
+          const rBruto = (bines / (tBruto / 60)).toFixed(1);
+          const rNeto = (bines / (tNeto / 60)).toFixed(1);
 
-            document.getElementById('ritmoNeto').innerHTML = `${rNeto} <span class="res-unit">bin/h</span>`;
-            document.getElementById('ritmoBruto').innerHTML = `${rBruto} <span class="res-unit">bin/h</span>`;
+          document.getElementById('ritmoNeto').innerHTML = `${rNeto} <span class="res-unit">bin/h</span>`;
+          document.getElementById('ritmoBruto').innerHTML = `${rBruto} <span class="res-unit">bin/h</span>`;
 
-            rNetoNum = parseFloat(rNeto);
-            rep.rNeto = rNeto;
-            rep.rBruto = rBruto;
+          rNetoNum = parseFloat(rNeto);
+          rep.rNeto = rNeto;
+          rep.rBruto = rBruto;
 
-            // Fin estimado de lote
-            const faltan = Math.max(0, totalLote - bines);
-            rep.faltan = faltan;
+          // Fin lote
+          const faltan = Math.max(0, totalLote - bines);
+          rep.faltan = faltan;
 
-            if (totalLote > 0 && bines >= totalLote) {
-              document.getElementById('tituloFinEstimado').textContent = 'Lote completado';
-              document.getElementById('finEstimado').textContent = '¡Terminado!';
-            } else if (faltan > 0 && rNetoNum > 0) {
-              const minFaltan = Math.round((faltan / rNetoNum) * 60);
-              const finEstimadoMin = (fin + minFaltan) % (24 * 60);
-              const hF = String(Math.floor(finEstimadoMin / 60)).padStart(2, '0');
-              const mF = String(finEstimadoMin % 60).padStart(2, '0');
-              document.getElementById('tituloFinEstimado').textContent = `Fin lote (faltan ${faltan} b)`;
-              document.getElementById('finEstimado').textContent = `${hF}:${mF} hs (+${Math.floor(minFaltan/60)}h ${minFaltan%60}m)`;
-            } else {
-              document.getElementById('finEstimado').textContent = '--:--';
-            }
+          if (totalLote > 0 && bines >= totalLote) {
+            document.getElementById('tituloFinEstimado').textContent = 'Lote completado';
+            document.getElementById('finEstimado').textContent = '¡Terminado!';
+          } else if (faltan > 0 && rNetoNum > 0) {
+            const minFaltan = Math.round((faltan / rNetoNum) * 60);
+            const finEstimadoMin = (fin + minFaltan) % (24 * 60);
+            const hF = String(Math.floor(finEstimadoMin / 60)).padStart(2, '0');
+            const mF = String(finEstimadoMin % 60).padStart(2, '0');
+            document.getElementById('tituloFinEstimado').textContent = `Fin lote (faltan ${faltan} b)`;
+            document.getElementById('finEstimado').textContent = `${hF}:${mF} hs (+${Math.floor(minFaltan/60)}h ${minFaltan%60}m)`;
+          } else {
+            document.getElementById('finEstimado').textContent = '--:--';
+          }
 
-            // Proyección cierre de turno (COMPLETAMENTE
+          // Cierre turno
+          const valCierre = document.getElementById('horaCierr
