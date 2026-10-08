@@ -109,22 +109,22 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </div>
 </div>
 
-<div class="section-title">📦 Ingresos (Bultos de 1ª y 2ª)</div>
+<div class="section-title">📦 Ingresos (Envases de 1ª y 2ª)</div>
 <div class="headers-tabla">
 <div>Descripción</div>
 <div>Calidad</div>
-<div>Cant.</div>
+<div>Envases</div>
 <div>Kg c/u</div>
 <div></div>
 </div>
 <div id="ingresosRows"></div>
 <button type="button" class="btn-add-row" id="btnAddIngreso">+ Agregar ingreso</button>
 
-<div class="section-title">📤 Salidas (Bultos / Pallets)</div>
+<div class="section-title">📤 Salidas (Envases / Pallets)</div>
 <div class="headers-tabla" style="grid-template-columns: 1fr 0.7fr 0.7fr 0.7fr 0.7fr 32px;">
 <div>Producto</div>
 <div>Cal.</div>
-<div>Bultos</div>
+<div>Envases</div>
 <div>Pallets</div>
 <div>Kg/u</div>
 <div></div>
@@ -253,7 +253,7 @@ function addLoteRow(quinta = '', lote = '', variedad = '', bines = '', fecha = '
     calcular();
 }
 
-function addIngresoRow(desc = 'Piso 1', calidad = '1ª', cant = '', kg = '15') {
+function addIngresoRow(desc = 'Piso 1', calidad = '1ª', envases = '', kg = '15') {
     const row = document.createElement('div');
     row.className = 'tabla-row';
     row.innerHTML = `
@@ -262,7 +262,7 @@ function addIngresoRow(desc = 'Piso 1', calidad = '1ª', cant = '', kg = '15') {
             <option value="1ª" ${calidad==='1ª'?'selected':''}>1ª</option>
             <option value="2ª" ${calidad==='2ª'?'selected':''}>2ª</option>
         </select>
-        <input type="number" class="ing-cant" value="${cant}" placeholder="Cant">
+        <input type="number" class="ing-envases" value="${envases}" placeholder="Envases">
         <input type="number" class="ing-kg" value="${kg}" placeholder="Kg">
         <button type="button" class="btn-del-row">×</button>
     `;
@@ -272,7 +272,7 @@ function addIngresoRow(desc = 'Piso 1', calidad = '1ª', cant = '', kg = '15') {
     calcular();
 }
 
-function addSalidaRow(prod = 'Torito', calidad = '1ª', bultos = '', pallets = '', kg = '15') {
+function addSalidaRow(prod = 'Torito', calidad = '1ª', envases = '', pallets = '', kg = '15') {
     const row = document.createElement('div');
     row.className = 'tabla-row';
     row.style.gridTemplateColumns = '1fr 0.7fr 0.7fr 0.7fr 0.7fr 32px';
@@ -282,7 +282,7 @@ function addSalidaRow(prod = 'Torito', calidad = '1ª', bultos = '', pallets = '
             <option value="1ª" ${calidad==='1ª'?'selected':''}>1ª</option>
             <option value="2ª" ${calidad==='2ª'?'selected':''}>2ª</option>
         </select>
-        <input type="number" class="sal-bultos" value="${bultos}" placeholder="Bultos">
+        <input type="number" class="sal-envases" value="${envases}" placeholder="Envases">
         <input type="number" class="sal-pallets" value="${pallets}" placeholder="Pallets">
         <input type="number" class="sal-kg" value="${kg}" placeholder="Kg/u">
         <button type="button" class="btn-del-row">×</button>
@@ -377,7 +377,6 @@ function calcular() {
     const horasEfectivas = minsEfectivos / 60;
     const binesIdealesTurno = horasEfectivas * objetivo;
 
-    // Si el descanso YA PASÓ ("si"), esos minutos no se cuentan como tiempo en que se estuvo volcando para el ritmo real
     const descansoYaPasadoMins = (descansoEstado.value === 'si') ? descPrinConfig : 0;
     const pausaReal = totalPausasExtra + descansoYaPasadoMins;
     const minsRitmoReal = Math.max(0, minsDesdeInicio - pausaReal);
@@ -425,19 +424,17 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Obj. turno: ${Math.round(binesIdealesTurno)} bines)`;
 
-    // Calcular kg por calidad en las salidas de bultos/pallets
     let kg1 = 0, kg2 = 0, kgInd = 0;
     salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
         const cal = r.querySelector('.sal-calidad').value;
-        const bultos = parseFloat(r.querySelector('.sal-bultos').value) || 0;
+        const envases = parseFloat(r.querySelector('.sal-envases').value) || 0;
         const kgU = parseFloat(r.querySelector('.sal-kg').value) || 0;
-        const totalKg = bultos * kgU;
+        const totalKg = envases * kgU;
         if (cal === '1ª') kg1 += totalKg;
         else if (cal === '2ª') kg2 += totalKg;
         else if (cal === 'Industria') kgInd += totalKg;
     });
 
-    // Calcular kg de bines de salida separados
     binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
         const cal = r.querySelector('.bs-calidad').value;
         const b = parseFloat(r.querySelector('.bs-bines').value) || 0;
