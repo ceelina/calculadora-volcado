@@ -118,6 +118,17 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <div class="res-value" id="balanceTurno">Sobra: 0 bines</div>
 <div class="info-subtext" id="detalleTurno">Tiempo efectivo total</div>
 </div>
+<div class="res-card full-width" style="background:#f0f9ff; border-color:#bae6fd;">
+<div class="res-title" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>Fin estimado de lote</span>
+    <select id="modoEstimacion" style="width:auto; font-size:0.65rem; padding:2px 4px;">
+        <option value="actual">Ritmo Promedio (Real)</option>
+        <option value="objetivo">Ritmo Objetivo</option>
+    </select>
+</div>
+<div class="res-value" id="horaFinEstimada" style="color:#0369a1;">--:-- hs</div>
+<div class="info-subtext" id="detalleFinEstimado">Calculando tiempo restante...</div>
+</div>
 </div>
 
 <div class="section-title">📤 Salidas (Envases / Pallets)</div>
@@ -197,6 +208,7 @@ const descansoEstado = document.getElementById('descansoEstado');
 const retardoMins = document.getElementById('retardoMins');
 const cadenciaObjetivo = document.getElementById('cadenciaObjetivo');
 const modoBalance = document.getElementById('modoBalance');
+const modoEstimacion = document.getElementById('modoEstimacion');
 
 const lotesRowsContainer = document.getElementById('lotesRows');
 const btnAddLote = document.getElementById('btnAddLote');
@@ -205,6 +217,8 @@ const ritmoRealEstado = document.getElementById('ritmoRealEstado');
 const detalleRitmo = document.getElementById('detalleRitmo');
 const balanceTurnoEl = document.getElementById('balanceTurno');
 const detalleTurnoEl = document.getElementById('detalleTurno');
+const horaFinEstimadaEl = document.getElementById('horaFinEstimada');
+const detalleFinEstimadoEl = document.getElementById('detalleFinEstimado');
 
 const salidasRowsContainer = document.getElementById('salidasRows');
 const btnAddSalida = document.getElementById('btnAddSalida');
@@ -225,6 +239,9 @@ const consumoJabonEl = document.getElementById('consumoJabon');
 const btnWsp = document.getElementById('btnWsp');
 const btnPdf = document.getElementById('btnPdf');
 const btnClear = document.getElementById('btnClear');
+
+let globalRendimientoTxt = "";
+let globalRitmoTxt = "";
 
 function ponerHoraActual() {
     const ahora = new Date();
@@ -393,6 +410,7 @@ function calcular() {
         detalleRitmo.textContent = `Se vuelcan: ~${binesIdealesHastaAhora} bines esperados`;
         ritmoRealEstado.style.color = 'var(--text)';
     }
+    globalRitmoTxt = ritmoRealEstado.textContent;
 
     let binesProyectadosFin = 0;
     if (modoBalance.value === 'actual' && ritmoRealVal > 0) {
@@ -417,7 +435,28 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Proyectado: ${Math.round(binesProyectadosFin)} bines)`;
 
-    // Cálculo detallado por calidad y producto con la columna "A Restar"
+    // Estimación hora fin de lote
+    const binesRestantesPorVolcar = Math.max(0, totalBinesIngreso - binesVolcados);
+    let velocidadParaEstimar = (modoEstimacion.value === 'actual' && ritmoRealVal > 0) ? ritmoRealVal : objetivo;
+    
+    if (binesRestantesPorVolcar > 0 && velocidadParaEstimar > 0 && horaActual.value) {
+        const horasFaltantes = binesRestantesPorVolcar / velocidadParaEstimar;
+        const [hAct, mAct] = horaActual.value.split(':').map(Number);
+        let totalMinsActuales = hAct * 60 + mAct + Math.round(horasFaltantes * 60);
+        
+        let finalH = Math.floor(totalMinsActuales / 60) % 24;
+        let finalM = totalMinsActuales % 60;
+        horaFinEstimadaEl.textContent = `${String(finalH).padStart(2,'0')}:${String(finalM).padStart(2,'0')} hs`;
+        detalleFinEstimadoEl.textContent = `Faltan ${binesRestantesPorVolcar} bines (~${Math.round(horasFaltantes * 60)} min)`;
+    } else if (totalBinesIngreso > 0 && binesRestantesPorVolcar === 0) {
+        horaFinEstimadaEl.textContent = `¡Lote completado!`;
+        detalleFinEstimadoEl.textContent = `Se terminaron de volcar todos los bines`;
+    } else {
+        horaFinEstimadaEl.textContent = `--:-- hs`;
+        detalleFinEstimadoEl.textContent = `Ingrese bines en lotes y hora actual`;
+    }
+
+    // Cálculo por calidad y producto
     let kg1 = 0, kg2 = 0, kgInd = 0;
     let descPorCalidad = { '1ª': {}, '2ª': {}, 'Industria': {} };
 
@@ -467,9 +506,9 @@ function calcular() {
     let merma = Math.max(0, 100 - rendimientoTotal);
 
     rendimientoDesglosadoEl.textContent = `1ª: ${r1.toFixed(1)}% | 2ª: ${r2.toFixed(1)}% | Ind: ${rInd.toFixed(1)}% | Merma: ${merma.toFixed(1)}%`;
+    globalRendimientoTxt = rendimientoDesglosadoEl.textContent;
     baseEmpacablesEl.textContent = `Base cálculo (con retardo): ${(totalKgVolcados/1000).toFixed(2)} t`;
 
-    // Generar desglose limpio y correcto por Calidad y Producto respecto al total global
     let htmlDesglose = [];
     let totalKgGlobal = totalKgVolcados > 0 ? totalKgVolcados : (kg1 + kg2 + kgInd);
 
@@ -526,7 +565,7 @@ function calcular() {
     consumoJabonEl.textContent = consumoJabon.toFixed(2);
 }
 
-[ritmoObjetivo, pesoBin, horaIni, horaActual, horaFin, limpiezaMins, descansoPrinMins, descansoEstado, retardoMins, modoBalance, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
+[ritmoObjetivo, pesoBin, horaIni, horaActual, horaFin, limpiezaMins, descansoPrinMins, descansoEstado, retardoMins, modoBalance, modoEstimacion, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
     if(el) el.addEventListener('input', calcular);
     if(el) el.addEventListener('change', calcular);
 });
@@ -550,14 +589,16 @@ btnClear.addEventListener('click', () => {
 });
 
 btnWsp.addEventListener('click', () => {
-    const texto = `*🍊 El Paruco - Control de Volcado e Insumos*
-- Hora Actual: ${horaActual.value}
+    const textoWsp = `*🍊 El Paruco - Control de Volcado e Insumos*
+- Hora Actual: ${horaActual.value || '--:--'}
 - Bines volcados: ${binesVolcadosInput.value || 0}
-- Ritmo Real: ${ritmoRealEstado.textContent}
-- Rendimiento y Merma: ${rendimientoDesglosadoEl.textContent}
+- Ritmo Real: ${globalRitmoTxt || '- bines/h'}
+- Fin estimado de lote: ${horaFinEstimadaEl.textContent}
+- Rendimiento y Merma: ${globalRendimientoTxt || '1ª: 0.0% | 2ª: 0.0% | Ind: 0.0% | Merma: 0.0%'}
 - Consumo Cera: ${consumoCeraEl.textContent} L/t
 - Consumo Jabón: ${consumoJabonEl.textContent} L/t`;
-    window.open(`https://api.wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+    
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoWsp)}`, '_blank');
 });
 
 btnPdf.addEventListener('click', () => {
