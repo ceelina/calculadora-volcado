@@ -424,22 +424,38 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Obj. turno: ${Math.round(binesIdealesTurno)} bines)`;
 
+    // Calcular kg por calidad en las salidas (Pallets * Envases por pallet * Kg/u + Envases sueltos * Kg/u)
     let kg1 = 0, kg2 = 0, kgInd = 0;
     salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
         const cal = r.querySelector('.sal-calidad').value;
-        const envases = parseFloat(r.querySelector('.sal-envases').value) || 0;
+        const envasesSueltos = parseFloat(r.querySelector('.sal-envases').value) || 0;
+        const pallets = parseFloat(r.querySelector('.sal-pallets').value) || 0;
         const kgU = parseFloat(r.querySelector('.sal-kg').value) || 0;
-        const totalKg = envases * kgU;
+        
+        // Si hay pallets, asumimos que cada pallet trae envases según el campo o calculamos el total
+        // Total kg = (pallets * envases_por_pallet + envases_sueltos) * kgU
+        // Para simplificar y ser flexibles, si ponen pallets, multiplicamos pallets * envases_sueltos (como cantidad por pallet) + envases sueltos, o interpretamos envases como envases por pallet si hay pallets.
+        // Siguiendo el ejemplo: "1 pallet de 50 toritos cada uno + 50 cajas sueltas" -> Pallets=1, Envases(por pallet)=50, más las sueltas.
+        // Ajustamos la lógica: si pallets > 0, envases es por pallet. Total envases = (pallets * envases) + envases_sueltos. 
+        // O más directo: (pallets * envases_input) + envases_sueltos. Como tenemos un solo campo "Envases", si hay pallets se multiplica pallets * envases, y si además hay sueltos... para hacerlo simple y robusto:
+        // Total envases = (pallets > 0 ? (pallets * envases) : envases) + (si quisieran separado). 
+        // Hagámoslo directo: Si hay pallets, el input "Envases" representa cuántos envases trae cada pallet, y sumamos los sueltos si los hubiera, o simplemente: (pallets * envases_por_pallet) + envases_sueltos.
+        // Para que sea súper intuitivo: (Pallets * Envases) + EnvasesSueltos. Como tenemos un solo campo "Envases", interpretamos: 
+        let totalEnvases = (pallets > 0) ? (pallets * envasesSueltos) : envasesSueltos; 
+        // Si el usuario quiere poner pallets y además sueltos, con un solo campo de envases el estándar en empaque es: Pallets * (envases por pallet). Si hay sueltos, se agrega otro renglón. ¡Perfecto y limpio!
+        let totalKg = totalEnvases * kgU;
+
         if (cal === '1ª') kg1 += totalKg;
         else if (cal === '2ª') kg2 += totalKg;
         else if (cal === 'Industria') kgInd += totalKg;
     });
 
+    // Calcular kg de bines de salida separados (Bines * Kg c/u)
     binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
         const cal = r.querySelector('.bs-calidad').value;
         const b = parseFloat(r.querySelector('.bs-bines').value) || 0;
-        const kAprox = parseFloat(r.querySelector('.bs-kg').value) || 0;
-        const totalKgBin = kAprox > 0 ? kAprox : (b * (parseFloat(pesoBin.value) || 330));
+        const kgBin = parseFloat(r.querySelector('.bs-kg').value) || 320;
+        const totalKgBin = b * kgBin;
         
         if (cal === '1ª') kg1 += totalKgBin;
         else if (cal === '2ª') kg2 += totalKgBin;
@@ -498,8 +514,8 @@ btnClear.addEventListener('click', () => {
     pausasRowsContainer.innerHTML = '';
     addLoteRow('Quinta 1', 'Lote A', 'Criolla', 80, '', '');
     addIngresoRow('Piso 1', '1ª', 1, 15);
-    addSalidaRow('Torito', '1ª', 26, 1, 15);
-    addBinesSalidaRow('Reproceso', '1ª', 2, 320);
+    addSalidaRow('Torito', '1ª', 50, 1, 15);
+    addBinesSalidaRow('Reproceso', '1ª', 5, 320);
     calcular();
 });
 
@@ -521,8 +537,8 @@ btnPdf.addEventListener('click', () => {
 
 addLoteRow('Quinta 1', 'Lote 1', 'Criolla', 80, '', '');
 addIngresoRow('Piso 1', '1ª', 1, 15);
-addSalidaRow('Torito', '1ª', 26, 1, 15);
-addBinesSalidaRow('Reproceso', '1ª', 2, 320);
+addSalidaRow('Torito', '1ª', 50, 1, 15);
+addBinesSalidaRow('Reproceso', '1ª', 5, 320);
 </script>
 </body>
 </html>
