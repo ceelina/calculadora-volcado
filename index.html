@@ -52,19 +52,25 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </div>
 
 <div class="grid-3 form-group">
-<div><label>Hora Inicial</label><input type="time" id="horaIni" value="06:00"></div>
+<div><label>Hora Inicial</label><input type="time" id="horaIni" value="08:40"></div>
 <div><label>Hora Actual</label><div style="display:flex;gap:5px;align-items:center"><input type="time" id="horaActual" style="flex:1;min-width:0"><button type="button" id="btnHoraActual" title="Poner hora actual" aria-label="Poner hora actual" style="width:38px;height:35px;border:1.5px solid var(--border);border-radius:8px;background:#fff7ed;color:var(--orange);font-size:1.1rem;cursor:pointer">🕐</button></div></div>
 <div><label>Hora Final</label><input type="time" id="horaFin" value="14:00"></div>
 </div>
 
-<div class="grid-3 form-group">
-<div><label>Limpieza (min)</label><input type="number" id="limpiezaMins" value="15" min="0"></div>
-<div><label>Descanso (min)</label><input type="number" id="descansoPrinMins" value="30" min="0"></div>
-<div><label>¿Ya pasó descanso?</label>
-<select id="descansoEstado">
-<option value="si">Sí</option>
-<option value="no" selected>No</option>
-</select>
+<div class="grid-2 form-group">
+<div>
+    <label>Limpieza (min)</label>
+    <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="limpiezaMins" value="30" min="0" style="flex:1;">
+        <label style="font-size:0.65rem;margin:0;cursor:pointer;display:flex;align-items:center;gap:2px;"><input type="checkbox" id="limpiezaPasada"> ¿Pasó?</label>
+    </div>
+</div>
+<div>
+    <label>Descanso (min)</label>
+    <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="descansoPrinMins" value="30" min="0" style="flex:1;">
+        <label style="font-size:0.65rem;margin:0;cursor:pointer;display:flex;align-items:center;gap:2px;"><input type="checkbox" id="descansoPasado"> ¿Pasó?</label>
+    </div>
 </div>
 </div>
 
@@ -91,25 +97,26 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <button type="button" class="btn-add-row" id="btnAddLote">+ Agregar lote</button>
 
 <div class="form-group" style="margin-top:8px">
-<label>Bines volcados totales hasta esta hora</label><input type="number" id="binesVolcados" min="0" placeholder="Ej: 30">
+<label>Bines volcados totales hasta esta hora</label><input type="number" id="binesVolcados" value="103" min="0" placeholder="Ej: 30">
 </div>
 
 <div class="results" style="margin-bottom:12px">
 <div class="res-card">
 <div class="res-title">Ritmo Bruto</div>
 <div class="res-value" id="ritmoBrutoEstado" style="font-size:1.1rem;">- bines/h</div>
-<div class="info-subtext">Descuenta solo descansos</div>
+<div class="info-subtext" id="tiempoBrutoSub">Tiempo bruto: 0h 0m</div>
 </div>
 <div class="res-card">
 <div class="res-title">Ritmo Neto</div>
 <div class="res-value" id="ritmoNetoEstado" style="font-size:1.1rem;">- bines/h</div>
-<div class="info-subtext">Descuenta pausas y descansos</div>
+<div class="info-subtext" id="tiempoNetoSub">Tiempo neto: 0h 0m</div>
 </div>
 <div class="res-card full-width">
 <div class="res-title" style="display:flex; justify-content:space-between; align-items:center;">
     <span>Balance Turno</span>
     <select id="modoBalance" style="width:auto; font-size:0.65rem; padding:2px 4px;">
-        <option value="actual">Ritmo Neto</option>
+        <option value="neto">Ritmo Neto</option>
+        <option value="bruto">Ritmo Bruto</option>
         <option value="objetivo">Ritmo Objetivo</option>
     </select>
 </div>
@@ -120,7 +127,8 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <div class="res-title" style="display:flex; justify-content:space-between; align-items:center;">
     <span>Fin estimado de lote</span>
     <select id="modoEstimacion" style="width:auto; font-size:0.65rem; padding:2px 4px;">
-        <option value="actual">Ritmo Neto (Real)</option>
+        <option value="neto">Ritmo Neto (Real)</option>
+        <option value="bruto">Ritmo Bruto</option>
         <option value="objetivo">Ritmo Objetivo</option>
     </select>
 </div>
@@ -201,8 +209,9 @@ const horaIni = document.getElementById('horaIni');
 const horaActual = document.getElementById('horaActual');
 const horaFin = document.getElementById('horaFin');
 const limpiezaMins = document.getElementById('limpiezaMins');
+const limpiezaPasada = document.getElementById('limpiezaPasada');
 const descansoPrinMins = document.getElementById('descansoPrinMins');
-const descansoEstado = document.getElementById('descansoEstado');
+const descansoPasado = document.getElementById('descansoPasado');
 const retardoMins = document.getElementById('retardoMins');
 const modoBalance = document.getElementById('modoBalance');
 const modoEstimacion = document.getElementById('modoEstimacion');
@@ -211,7 +220,9 @@ const lotesRowsContainer = document.getElementById('lotesRows');
 const btnAddLote = document.getElementById('btnAddLote');
 const binesVolcadosInput = document.getElementById('binesVolcados');
 const ritmoBrutoEstado = document.getElementById('ritmoBrutoEstado');
+const tiempoBrutoSub = document.getElementById('tiempoBrutoSub');
 const ritmoNetoEstado = document.getElementById('ritmoNetoEstado');
+const tiempoNetoSub = document.getElementById('tiempoNetoSub');
 const balanceTurnoEl = document.getElementById('balanceTurno');
 const detalleTurnoEl = document.getElementById('detalleTurno');
 const horaFinEstimadaEl = document.getElementById('horaFinEstimada');
@@ -340,9 +351,8 @@ btnAddPausa.addEventListener('click', () => addPausaRow());
 
 function calcular() {
     const objetivo = parseFloat(ritmoObjetivo.value) || 0;
-    const limpieza = parseFloat(limpiezaMins.value) || 0;
-    const descPrinConfig = parseFloat(descansoPrinMins.value) || 0;
-    const descPrin = descansoEstado.value === 'no' ? descPrinConfig : 0;
+    const valLimpieza = parseFloat(limpiezaMins.value) || 0;
+    const valDescanso = parseFloat(descansoPrinMins.value) || 0;
     const retardo = parseFloat(retardoMins.value) || 0;
 
     let totalPausasExtra = 0;
@@ -363,22 +373,32 @@ function calcular() {
         minsDesdeInicio = Math.max(0, (ha * 60 + ma) - (h1 * 60 + m1));
     }
 
-    // Descuentos en tiempo efectivo total del turno
-    // El descanso principal de 30 min (si ya pasó o no) se descuenta siempre del tiempo efectivo total del turno
-    const totalDescuentosEfectivos = limpieza + descPrinConfig + totalPausasExtra;
-    const minsEfectivos = Math.max(0, totalMinsTurno - totalDescuentosEfectivos);
+    // Estados de los tildes
+    const isLimpiezaPasada = limpiezaPasada.checked;
+    const isDescansoPasado = descansoPasado.checked;
+
+    const currentLimpiezaEfectiva = isLimpiezaPasada ? valLimpieza : 0;
+    const currentDescansoEfectivo = isDescansoPasado ? valDescanso : 0;
+
+    // 1. Horas efectivas totales del turno (para el balance y objetivo total)
+    // Si la limpieza o el descanso NO pasaron, se deben restar del tiempo total del turno porque ocurrirán o restan tiempo útil.
+    const turnoLimpiezaRestar = isLimpiezaPasada ? valLimpieza : valLimpieza; // el turno completo contempla la limpieza y descanso planeados
+    const turnoDescansoRestar = valDescanso;
+    const totalDescuentosTurno = valLimpieza + valDescanso + totalPausasExtra;
+    const minsEfectivos = Math.max(0, totalMinsTurno - totalDescuentosTurno);
     const horasEfectivas = minsEfectivos / 60;
     const binesIdealesTurno = horasEfectivas * objetivo;
 
-    // RITMO BRUTO: Descuenta únicamente el descanso principal (sea que ya pasó o no, para evaluar el bloque horario bruto de trabajo)
-    const descBruto = descPrinConfig;
-    const minsBrutoTranscurridos = Math.max(0, minsDesdeInicio - descBruto);
+    // 2. Tiempo Bruto transcurrido hasta la hora actual:
+    // Descuenta únicamente el descanso si ya pasó (isDescansoPasado)
+    const descBrutoAplicado = isDescansoPasado ? valDescanso : 0;
+    const minsBrutoTranscurridos = Math.max(0, minsDesdeInicio - descBrutoAplicado);
     const horasBruto = minsBrutoTranscurridos / 60;
 
-    // RITMO NETO: Descuenta pausas y el descanso principal si ya pasó
-    const descansoYaPasadoMins = (descansoEstado.value === 'si') ? descPrinConfig : 0;
-    const pausaNetoTotal = totalPausasExtra + descansoYaPasadoMins;
-    const minsNetoTranscurridos = Math.max(0, minsDesdeInicio - pausaNetoTotal);
+    // 3. Tiempo Neto transcurrido hasta la hora actual:
+    // Descuenta el descanso (si pasó), la limpieza (si pasó) y las pausas extra
+    const descNetoAplicado = (isDescansoPasado ? valDescanso : 0) + (isLimpiezaPasada ? valLimpieza : 0);
+    const minsNetoTranscurridos = Math.max(0, minsDesdeInicio - descNetoAplicado - totalPausasExtra);
     const horasNeto = minsNetoTranscurridos / 60;
 
     let totalBinesIngreso = 0;
@@ -388,7 +408,7 @@ function calcular() {
 
     const binesVolcados = parseFloat(binesVolcadosInput.value) || 0;
 
-    // Cálculo Ritmo Bruto
+    // Ritmo Bruto
     let ritmoBrutoVal = 0;
     if (binesVolcados > 0 && horasBruto > 0) {
         ritmoBrutoVal = binesVolcados / horasBruto;
@@ -396,8 +416,9 @@ function calcular() {
     } else {
         ritmoBrutoEstado.textContent = `- bines/h`;
     }
+    tiempoBrutoSub.textContent = `Tiempo bruto: ${Math.floor(minsBrutoTranscurridos/60)}h ${minsBrutoTranscurridos%60}m`;
 
-    // Cálculo Ritmo Neto
+    // Ritmo Neto
     let ritmoNetoVal = 0;
     if (binesVolcados > 0 && horasNeto > 0) {
         ritmoNetoVal = binesVolcados / horasNeto;
@@ -405,12 +426,15 @@ function calcular() {
     } else {
         ritmoNetoEstado.textContent = `- bines/h`;
     }
+    tiempoNetoSub.textContent = `Tiempo neto: ${Math.floor(minsNetoTranscurridos/60)}h ${minsNetoTranscurridos%60}m`;
     globalRitmoNetoTxt = ritmoNetoEstado.textContent;
 
-    // Balance Turno (Proyección al final)
+    // Balance Turno según opción elegida (Neto, Bruto u Objetivo)
     let binesProyectadosFin = 0;
-    if (modoBalance.value === 'actual' && ritmoNetoVal > 0) {
+    if (modoBalance.value === 'neto' && ritmoNetoVal > 0) {
         binesProyectadosFin = binesVolcados + (ritmoNetoVal * (minsEfectivos / 60 - horasNeto));
+    } else if (modoBalance.value === 'bruto' && ritmoBrutoVal > 0) {
+        binesProyectadosFin = binesVolcados + (ritmoBrutoVal * (minsEfectivos / 60 - horasBruto));
     } else {
         binesProyectadosFin = binesIdealesTurno;
     }
@@ -431,9 +455,11 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Proyectado: ${Math.round(binesProyectadosFin)} bines)`;
 
-    // Estimación hora fin de lote
+    // Estimación hora fin de lote según opción elegida
     const binesRestantesPorVolcar = Math.max(0, totalBinesIngreso - binesVolcados);
-    let velocidadParaEstimar = (modoEstimacion.value === 'actual' && ritmoNetoVal > 0) ? ritmoNetoVal : objetivo;
+    let velocidadParaEstimar = objetivo;
+    if (modoEstimacion.value === 'neto' && ritmoNetoVal > 0) velocidadParaEstimar = ritmoNetoVal;
+    else if (modoEstimacion.value === 'bruto' && ritmoBrutoVal > 0) velocidadParaEstimar = ritmoBrutoVal;
     
     if (binesRestantesPorVolcar > 0 && velocidadParaEstimar > 0 && horaActual.value) {
         const horasFaltantes = binesRestantesPorVolcar / velocidadParaEstimar;
@@ -508,7 +534,6 @@ function calcular() {
     let htmlDesglose = [];
     let totalKgGlobal = totalKgVolcados > 0 ? totalKgVolcados : (kg1 + kg2 + kgInd);
 
-    // 1ª Calidad
     if (kg1 > 0) {
         let pctCal1 = totalKgGlobal > 0 ? (kg1 / totalKgGlobal) * 100 : 0;
         htmlDesglose.push(`<b>1ª (${pctCal1.toFixed(1)}%):</b>`);
@@ -519,7 +544,6 @@ function calcular() {
         }
     }
 
-    // 2ª Calidad
     if (kg2 > 0) {
         let pctCal2 = totalKgGlobal > 0 ? (kg2 / totalKgGlobal) * 100 : 0;
         htmlDesglose.push(`<b>2ª (${pctCal2.toFixed(1)}%):</b>`);
@@ -530,7 +554,6 @@ function calcular() {
         }
     }
 
-    // Industria
     if (kgInd > 0) {
         let pctCalInd = totalKgGlobal > 0 ? (kgInd / totalKgGlobal) * 100 : 0;
         htmlDesglose.push(`<b>Industria (${pctCalInd.toFixed(1)}%):</b>`);
@@ -541,7 +564,6 @@ function calcular() {
         }
     }
 
-    // Merma
     if (merma > 0) {
         htmlDesglose.push(`<b>Merma (${merma.toFixed(1)}%):</b> Fruta no recuperada`);
     }
@@ -561,21 +583,22 @@ function calcular() {
     consumoJabonEl.textContent = consumoJabon.toFixed(2);
 }
 
-[ritmoObjetivo, pesoBin, horaIni, horaActual, horaFin, limpiezaMins, descansoPrinMins, descansoEstado, retardoMins, modoBalance, modoEstimacion, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
+[ritmoObjetivo, pesoBin, horaIni, horaActual, horaFin, limpiezaMins, limpiezaPasada, descansoPrinMins, descansoPasado, retardoMins, modoBalance, modoEstimacion, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
     if(el) el.addEventListener('input', calcular);
     if(el) el.addEventListener('change', calcular);
 });
 
 btnClear.addEventListener('click', () => {
-    document.querySelectorAll('input').forEach(i => { if(i.type !== 'time' && i.type !== 'date') i.value = ''; });
+    document.querySelectorAll('input').forEach(i => { if(i.type !== 'time' && i.type !== 'date' && i.type !== 'checkbox') i.value = ''; });
     ritmoObjetivo.value = '30';
     pesoBin.value = '330';
-    horaIni.value = '06:00';
+    horaIni.value = '08:40';
     ponerHoraActual();
     horaFin.value = '14:00';
-    limpiezaMins.value = '15';
+    limpiezaMins.value = '30';
+    limpiezaPasada.checked = false;
     descansoPrinMins.value = '30';
-    descansoEstado.value = 'no';
+    descansoPasado.checked = true;
     retardoMins.value = '10';
     lotesRowsContainer.innerHTML = '';
     salidasRowsContainer.innerHTML = '';
