@@ -120,17 +120,6 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </div>
 </div>
 
-<div class="section-title">📦 Ingresos (Pisos de Fruta / Restados)</div>
-<div class="headers-tabla" style="grid-template-columns: 0.9fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 32px;">
-<div>Descripción</div>
-<div>Calidad</div>
-<div>Envases</div>
-<div>Kg c/u</div>
-<div></div>
-</div>
-<div id="ingresosRows"></div>
-<button type="button" class="btn-add-row" id="btnAddIngreso">+ Agregar ingreso</button>
-
 <div class="section-title">📤 Salidas (Envases / Pallets)</div>
 <div class="headers-tabla">
 <div>Descripción</div>
@@ -163,8 +152,8 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <div class="info-subtext" id="baseEmpacables">Base: 0 bines empacables</div>
 </div>
 <div class="res-card full-width">
-<div class="res-title">Porcentaje Agrupado (1ª, 2ª, Ind, Merma)</div>
-<div class="res-value" id="detallePorDesc" style="font-size:0.8rem; font-weight:normal; margin-top:4px; text-align:left; padding:0 4px;">-</div>
+<div class="res-title">Detalle por Calidad y Producto</div>
+<div class="res-value" id="detallePorDesc" style="font-size:0.75rem; font-weight:normal; margin-top:4px; text-align:left; padding:0 4px; line-height: 1.4;">-</div>
 </div>
 </div>
 
@@ -217,8 +206,6 @@ const detalleRitmo = document.getElementById('detalleRitmo');
 const balanceTurnoEl = document.getElementById('balanceTurno');
 const detalleTurnoEl = document.getElementById('detalleTurno');
 
-const ingresosRowsContainer = document.getElementById('ingresosRows');
-const btnAddIngreso = document.getElementById('btnAddIngreso');
 const salidasRowsContainer = document.getElementById('salidasRows');
 const btnAddSalida = document.getElementById('btnAddSalida');
 const binesSalidaRowsContainer = document.getElementById('binesSalidaRows');
@@ -265,25 +252,6 @@ function addLoteRow(quinta = '', lote = '', variedad = '', bines = '', fecha = '
     row.querySelectorAll('input').forEach(el => el.addEventListener('input', calcular));
     row.querySelector('.btn-del-row').addEventListener('click', () => { row.remove(); calcular(); });
     lotesRowsContainer.appendChild(row);
-    calcular();
-}
-
-function addIngresoRow(desc = 'Piso 1', calidad = '1ª', envases = '', kg = '15') {
-    const row = document.createElement('div');
-    row.className = 'tabla-row';
-    row.innerHTML = `
-        <input type="text" class="ing-desc" value="${desc}" placeholder="Desc">
-        <select class="ing-calidad">
-            <option value="1ª" ${calidad==='1ª'?'selected':''}>1ª</option>
-            <option value="2ª" ${calidad==='2ª'?'selected':''}>2ª</option>
-        </select>
-        <input type="number" class="ing-envases" value="${envases}" placeholder="Envases">
-        <input type="number" class="ing-kg" value="${kg}" placeholder="Kg">
-        <button type="button" class="btn-del-row">×</button>
-    `;
-    row.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calcular));
-    row.querySelector('.btn-del-row').addEventListener('click', () => { row.remove(); calcular(); });
-    ingresosRowsContainer.appendChild(row);
     calcular();
 }
 
@@ -352,7 +320,6 @@ function addPausaRow(mins = '', razon = 'Embalado') {
 }
 
 btnAddLote.addEventListener('click', () => addLoteRow());
-btnAddIngreso.addEventListener('click', () => addIngresoRow());
 btnAddSalida.addEventListener('click', () => addSalidaRow());
 btnAddBinesSalida.addEventListener('click', () => addBinesSalidaRow());
 btnAddPausa.addEventListener('click', () => addPausaRow());
@@ -400,8 +367,6 @@ function calcular() {
     const pausaReal = totalPausasExtra + descansoYaPasadoMins;
     const minsRitmoReal = Math.max(0, minsDesdeInicio - pausaReal);
     const horasTranscurridasHastaAhora = minsRitmoReal / 60;
-    
-    // El ritmo real NO se ve afectado por el retardo de línea (calcula el tiempo real transcurrido)
     const binesIdealesHastaAhora = Math.round(horasTranscurridasHastaAhora * objetivo);
 
     let totalBinesIngreso = 0;
@@ -452,18 +417,12 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Proyectado: ${Math.round(binesProyectadosFin)} bines)`;
 
-    // Calcular kg de ingresos (pisos)
-    let kgIngresos = 0;
-    ingresosRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
-        const envases = parseFloat(r.querySelector('.ing-envases').value) || 0;
-        const kgU = parseFloat(r.querySelector('.ing-kg').value) || 0;
-        kgIngresos += envases * kgU;
-    });
-
-    // Calcular kg por calidad en las salidas descontando los envases a restar previamente fabricados
+    // Cálculo detallado por calidad y producto con la columna "A Restar"
     let kg1 = 0, kg2 = 0, kgInd = 0;
+    let descPorCalidad = { '1ª': {}, '2ª': {}, 'Industria': {} };
 
     salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
+        const desc = r.querySelector('.sal-desc').value.trim() || 'Sin desc';
         const pallets = parseFloat(r.querySelector('.sal-pallets').value) || 0;
         const envPallet = parseFloat(r.querySelector('.sal-envpallet').value) || 0;
         const sueltos = parseFloat(r.querySelector('.sal-sueltos').value) || 0;
@@ -477,9 +436,13 @@ function calcular() {
         if (cal === '1ª') kg1 += totalKg;
         else if (cal === '2ª') kg2 += totalKg;
         else if (cal === 'Industria') kgInd += totalKg;
+
+        if (!descPorCalidad[cal][desc]) descPorCalidad[cal][desc] = 0;
+        descPorCalidad[cal][desc] += totalKg;
     });
 
     binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
+        const desc = r.querySelector('.bs-desc').value.trim() || 'Sin desc';
         const cal = r.querySelector('.bs-calidad').value;
         const b = parseFloat(r.querySelector('.bs-bines').value) || 0;
         const kAprox = parseFloat(r.querySelector('.bs-kg').value) || 320;
@@ -488,21 +451,12 @@ function calcular() {
         if (cal === '1ª') kg1 += totalKgBin;
         else if (cal === '2ª') kg2 += totalKgBin;
         else if (cal === 'Industria') kgInd += totalKgBin;
-    });
 
-    // Sumar los ingresos (pisos)
-    ingresosRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
-        const cal = r.querySelector('.ing-calidad').value;
-        const envases = parseFloat(r.querySelector('.ing-envases').value) || 0;
-        const kgU = parseFloat(r.querySelector('.ing-kg').value) || 0;
-        const totalKgIng = envases * kgU;
-        if (cal === '1ª') kg1 += totalKgIng;
-        else if (cal === '2ª') kg2 += totalKgIng;
+        if (!descPorCalidad[cal][desc]) descPorCalidad[cal][desc] = 0;
+        descPorCalidad[cal][desc] += totalKgBin;
     });
 
     const pBin = parseFloat(pesoBin.value) || 330;
-    
-    // El retardo de línea SÍ afecta al rendimiento (desfase de bines en batea)
     const binesVolcadosParaRendimiento = Math.max(0, binesVolcados - (retardo / 60) * objetivo);
     const totalKgVolcados = binesVolcadosParaRendimiento * pBin;
 
@@ -515,8 +469,27 @@ function calcular() {
     rendimientoDesglosadoEl.textContent = `1ª: ${r1.toFixed(1)}% | 2ª: ${r2.toFixed(1)}% | Ind: ${rInd.toFixed(1)}% | Merma: ${merma.toFixed(1)}%`;
     baseEmpacablesEl.textContent = `Base cálculo (con retardo): ${(totalKgVolcados/1000).toFixed(2)} t`;
 
-    // Porcentaje agrupado en 1era, 2da, Industria y Merma
-    detallePorDescEl.textContent = `• 1ª: ${r1.toFixed(1)}%  |  • 2ª: ${r2.toFixed(1)}%  |  • Ind: ${rInd.toFixed(1)}%  |  • Merma: ${merma.toFixed(1)}%`;
+    // Generar desglose porcentual jerárquico por Calidad y Producto
+    let htmlDesglose = [];
+    let totalKgGlobal = kg1 + kg2 + kgInd;
+
+    ['1ª', '2ª', 'Industria'].forEach(calKey => {
+        let kgCal = (calKey === '1ª') ? kg1 : (calKey === '2ª') ? kg2 : kgInd;
+        let pctCal = totalKgGlobal > 0 ? (kgCal / totalKgGlobal) * 100 : 0;
+        if (kgCal > 0) {
+            htmlDesglose.push(`<b>${calKey} (${pctCal.toFixed(1)}%):</b>`);
+            for (let prod in descPorCalidad[calKey]) {
+                let kgProd = descPorCalidad[calKey][prod];
+                let pctProdSobreCal = kgCal > 0 ? (kgProd / kgCal) * 100 : 0;
+                htmlDesglose.push(`&nbsp;&nbsp;• ${prod}: ${pctProdOver => pctProdSobreCal.toFixed(1)}% de la cal.`);
+            }
+        }
+    });
+
+    // Añadir Merma
+    htmlDesglose.push(`<b>Merma (${merma.toFixed(1)}%):</b> Fruta no recuperada`);
+    
+    detallePorDescEl.innerHTML = htmlDesglose.join('<br>');
 
     const toneladas = totalKgVolcados / 1000;
     const cIni = parseFloat(ceraIni.value) || 0;
@@ -548,12 +521,10 @@ btnClear.addEventListener('click', () => {
     descansoEstado.value = 'no';
     retardoMins.value = '10';
     lotesRowsContainer.innerHTML = '';
-    ingresosRowsContainer.innerHTML = '';
     salidasRowsContainer.innerHTML = '';
     binesSalidaRowsContainer.innerHTML = '';
     pausasRowsContainer.innerHTML = '';
     addLoteRow('Quinta 1', 'Lote A', 'Criolla', 80, '', '');
-    addIngresoRow('Piso 1', '1ª', 1, 15);
     addSalidaRow('Torito', '1ª', 1, 50, 0, 0, 15);
     addBinesSalidaRow('Reproceso', '1ª', 5, 320);
     calcular();
@@ -575,7 +546,6 @@ btnPdf.addEventListener('click', () => {
 });
 
 addLoteRow('La criolla', '32', 'w murcott', 151, '2026-09-30', '1274');
-addIngresoRow('IFCO', '1ª', 39, 19);
 addSalidaRow('IFCO', '1ª', 9, 40, 0, 0, 19);
 addSalidaRow('IFCO', '1ª', 0, 0, 38, 0, 19);
 addSalidaRow('Torito', '1ª', 3, 64, 0, 0, 17);
