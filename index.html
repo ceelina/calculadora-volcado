@@ -96,6 +96,11 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 
 <div class="results" style="margin-bottom:12px">
 <div class="res-card full-width">
+<div class="res-title">Velocidad Real vs Objetivo</div>
+<div class="res-value" id="ritmoRealEstado">- bines/h</div>
+<div class="info-subtext" id="detalleRitmo">Ingrese bines volcados</div>
+</div>
+<div class="res-card full-width">
 <div class="res-title">Balance al Finalizar Turno</div>
 <div class="res-value" id="balanceTurno">Sobra: 0 bines</div>
 <div class="info-subtext" id="detalleTurno">Tiempo efectivo: 7h 45m</div>
@@ -188,6 +193,8 @@ const cadenciaObjetivo = document.getElementById('cadenciaObjetivo');
 const lotesRowsContainer = document.getElementById('lotesRows');
 const btnAddLote = document.getElementById('btnAddLote');
 const binesVolcadosInput = document.getElementById('binesVolcados');
+const ritmoRealEstado = document.getElementById('ritmoRealEstado');
+const detalleRitmo = document.getElementById('detalleRitmo');
 const balanceTurnoEl = document.getElementById('balanceTurno');
 const detalleTurnoEl = document.getElementById('detalleTurno');
 
@@ -317,7 +324,6 @@ function calcular() {
     const objetivo = parseFloat(ritmoObjetivo.value) || 0;
     const limpieza = parseFloat(limpiezaMins.value) || 0;
     const descPrinConfig = parseFloat(descansoPrinMins.value) || 0;
-    // Si el descanso NO pasó, se descuenta de los minutos efectivos disponibles para volcar
     const descPrin = descansoEstado.value === 'no' ? descPrinConfig : 0;
 
     let totalPausasExtra = 0;
@@ -335,6 +341,7 @@ function calcular() {
     }
 
     let totalMinsTurno = 480;
+    let minsDesdeInicio = 0;
     if (horaIni.value && horaFin.value) {
         const [h1, m1] = horaIni.value.split(':').map(Number);
         const [h2, m2] = horaFin.value.split(':').map(Number);
@@ -342,6 +349,12 @@ function calcular() {
         let mins2 = h2 * 60 + m2;
         if (mins2 < mins1) mins2 += 24 * 60;
         totalMinsTurno = mins2 - mins1;
+
+        // Calcular hora actual transcurrida simulada para ver ritmo parcial
+        const ahora = new Date();
+        let minsActuales = ahora.getHours() * 60 + ahora.getMinutes();
+        if (minsActuales < mins1 && mins2 > 24*60) minsActuales += 24*60;
+        minsDesdeInicio = Math.max(0, Math.min(minsActuales - mins1, totalMinsTurno));
     }
 
     const totalDescuentos = limpieza + descPrin + totalPausasExtra;
@@ -355,6 +368,29 @@ function calcular() {
     });
 
     const binesVolcados = parseFloat(binesVolcadosInput.value) || 0;
+    
+    // Calcular velocidad real (bines / hora transcurrida efectiva)
+    let horasTranscurridasEfectivas = Math.max(0.1, (minsDesdeInicio - totalDescuentos) / 60);
+    if (minsDesdeInicio === 0) horasTranscurridasEfectivas = horasEfectivas > 0 ? horasEfectivas : 1; // fallback si no toma la hora del sistema
+    
+    const ritmoReal = binesVolcados / horasTranscurridasEfectivas;
+    const diferenciaRitmo = Math.round(ritmoReal - objetivo);
+
+    if (binesVolcados > 0) {
+        ritmoRealEstado.textContent = `${ritmoReal.toFixed(1)} bines/h`;
+        if (diferenciaRitmo >= 0) {
+            ritmoRealEstado.style.color = 'var(--green-dark)';
+            detalleRitmo.textContent = `¡Muy bien! Estás +${diferenciaRitmo} b/h arriba del objetivo`;
+        } else {
+            ritmoRealEstado.style.color = 'var(--orange)';
+            detalleRitmo.textContent = `Atrasado: ${Math.abs(diferenciaRitmo)} b/h debajo del objetivo`;
+        }
+    } else {
+        ritmoRealEstado.textContent = `- bines/h`;
+        detalleRitmo.textContent = `Ingrese bines volcados para calcular`;
+        ritmoRealEstado.style.color = 'var(--text)';
+    }
+
     const binesSobrantesAlFinal = totalBinesIngreso - Math.round(binesIdealesTurno);
 
     if (totalBinesIngreso > 0) {
@@ -384,7 +420,6 @@ function calcular() {
         else if (cal === 'Industria') kgInd += totalKg;
     });
 
-    // Sumar también kg de bines de salida con destino industria si se cargaron
     binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
         const b = parseFloat(r.querySelector('.bs-bines').value) || 0;
         const kAprox = parseFloat(r.querySelector('.bs-kg').value) || 0;
@@ -450,6 +485,7 @@ btnClear.addEventListener('click', () => {
 btnWsp.addEventListener('click', () => {
     const texto = `*🍊 El Paruco - Control de Volcado e Insumos*
 - Bines volcados: ${binesVolcadosInput.value || 0}
+- Ritmo Real: ${ritmoRealEstado.textContent}
 - Rendimiento Desglosado: ${rendimientoDesglosadoEl.textContent}
 - Descarte Estimado: ${descarteEstimadoEl.textContent}
 - Consumo Cera: ${consumoCeraEl.textContent} L/t
