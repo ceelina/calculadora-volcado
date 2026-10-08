@@ -255,7 +255,7 @@ function addLoteRow(quinta = '', lote = '', variedad = '', bines = '', fecha = '
     calcular();
 }
 
-function addSalidaRow(desc = 'Torito', calidad = '1ª', pallets = '', envPallet = '', sueltos = '', aRestar = '', kg = '15') {
+function addSalidaRow(desc = '', calidad = '1ª', pallets = '', envPallet = '', sueltos = '', aRestar = '', kg = '15') {
     const row = document.createElement('div');
     row.className = 'tabla-row';
     row.style.gridTemplateColumns = '0.9fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 32px';
@@ -279,7 +279,7 @@ function addSalidaRow(desc = 'Torito', calidad = '1ª', pallets = '', envPallet 
     calcular();
 }
 
-function addBinesSalidaRow(desc = 'Reproceso', calidad = '1ª', bines = '', kg = '320') {
+function addBinesSalidaRow(desc = '', calidad = '1ª', bines = '', kg = '320') {
     const row = document.createElement('div');
     row.className = 'bines-salida-row';
     row.innerHTML = `
@@ -469,27 +469,49 @@ function calcular() {
     rendimientoDesglosadoEl.textContent = `1ª: ${r1.toFixed(1)}% | 2ª: ${r2.toFixed(1)}% | Ind: ${rInd.toFixed(1)}% | Merma: ${merma.toFixed(1)}%`;
     baseEmpacablesEl.textContent = `Base cálculo (con retardo): ${(totalKgVolcados/1000).toFixed(2)} t`;
 
-    // Generar desglose porcentual jerárquico por Calidad y Producto
+    // Generar desglose limpio y correcto por Calidad y Producto respecto al total global
     let htmlDesglose = [];
-    let totalKgGlobal = kg1 + kg2 + kgInd;
+    let totalKgGlobal = totalKgVolcados > 0 ? totalKgVolcados : (kg1 + kg2 + kgInd);
 
-    ['1ª', '2ª', 'Industria'].forEach(calKey => {
-        let kgCal = (calKey === '1ª') ? kg1 : (calKey === '2ª') ? kg2 : kgInd;
-        let pctCal = totalKgGlobal > 0 ? (kgCal / totalKgGlobal) * 100 : 0;
-        if (kgCal > 0) {
-            htmlDesglose.push(`<b>${calKey} (${pctCal.toFixed(1)}%):</b>`);
-            for (let prod in descPorCalidad[calKey]) {
-                let kgProd = descPorCalidad[calKey][prod];
-                let pctProdSobreCal = kgCal > 0 ? (kgProd / kgCal) * 100 : 0;
-                htmlDesglose.push(`&nbsp;&nbsp;• ${prod}: ${pctProdOver => pctProdSobreCal.toFixed(1)}% de la cal.`);
-            }
+    // 1ª Calidad
+    if (kg1 > 0) {
+        let pctCal1 = totalKgGlobal > 0 ? (kg1 / totalKgGlobal) * 100 : 0;
+        htmlDesglose.push(`<b>1ª (${pctCal1.toFixed(1)}%):</b>`);
+        for (let prod in descPorCalidad['1ª']) {
+            let kgProd = descPorCalidad['1ª'][prod];
+            let pctProd = totalKgGlobal > 0 ? (kgProd / totalKgGlobal) * 100 : 0;
+            htmlDesglose.push(`&nbsp;&nbsp;• ${prod}: ${pctProd.toFixed(1)}%`);
         }
-    });
+    }
 
-    // Añadir Merma
-    htmlDesglose.push(`<b>Merma (${merma.toFixed(1)}%):</b> Fruta no recuperada`);
-    
-    detallePorDescEl.innerHTML = htmlDesglose.join('<br>');
+    // 2ª Calidad
+    if (kg2 > 0) {
+        let pctCal2 = totalKgGlobal > 0 ? (kg2 / totalKgGlobal) * 100 : 0;
+        htmlDesglose.push(`<b>2ª (${pctCal2.toFixed(1)}%):</b>`);
+        for (let prod in descPorCalidad['2ª']) {
+            let kgProd = descPorCalidad['2ª'][prod];
+            let pctProd = totalKgGlobal > 0 ? (kgProd / totalKgGlobal) * 100 : 0;
+            htmlDesglose.push(`&nbsp;&nbsp;• ${prod}: ${pctProd.toFixed(1)}%`);
+        }
+    }
+
+    // Industria
+    if (kgInd > 0) {
+        let pctCalInd = totalKgGlobal > 0 ? (kgInd / totalKgGlobal) * 100 : 0;
+        htmlDesglose.push(`<b>Industria (${pctCalInd.toFixed(1)}%):</b>`);
+        for (let prod in descPorCalidad['Industria']) {
+            let kgProd = descPorCalidad['Industria'][prod];
+            let pctProd = totalKgGlobal > 0 ? (kgProd / totalKgGlobal) * 100 : 0;
+            htmlDesglose.push(`&nbsp;&nbsp;• ${prod}: ${pctProd.toFixed(1)}%`);
+        }
+    }
+
+    // Merma
+    if (merma > 0) {
+        htmlDesglose.push(`<b>Merma (${merma.toFixed(1)}%):</b> Fruta no recuperada`);
+    }
+
+    detallePorDescEl.innerHTML = htmlDesglose.length > 0 ? htmlDesglose.join('<br>') : 'Sin salidas cargadas';
 
     const toneladas = totalKgVolcados / 1000;
     const cIni = parseFloat(ceraIni.value) || 0;
@@ -524,9 +546,6 @@ btnClear.addEventListener('click', () => {
     salidasRowsContainer.innerHTML = '';
     binesSalidaRowsContainer.innerHTML = '';
     pausasRowsContainer.innerHTML = '';
-    addLoteRow('Quinta 1', 'Lote A', 'Criolla', 80, '', '');
-    addSalidaRow('Torito', '1ª', 1, 50, 0, 0, 15);
-    addBinesSalidaRow('Reproceso', '1ª', 5, 320);
     calcular();
 });
 
@@ -545,13 +564,6 @@ btnPdf.addEventListener('click', () => {
     window.print();
 });
 
-addLoteRow('La criolla', '32', 'w murcott', 151, '2026-09-30', '1274');
-addSalidaRow('IFCO', '1ª', 9, 40, 0, 0, 19);
-addSalidaRow('IFCO', '1ª', 0, 0, 38, 0, 19);
-addSalidaRow('Torito', '1ª', 3, 64, 0, 0, 17);
-addSalidaRow('Torito', '1ª', 2, 56, 0, 0, 17);
-addSalidaRow('Torito', '1ª', 0, 0, 54, 0, 17);
-addBinesSalidaRow('Industria', 'Industria', 59.5, 320);
 calcular();
 </script>
 </body>
