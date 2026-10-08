@@ -103,7 +103,13 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <div class="info-subtext" id="detalleRitmo">Comparado con el objetivo a esta hora</div>
 </div>
 <div class="res-card full-width">
-<div class="res-title">Balance al Finalizar Turno</div>
+<div class="res-title" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>Balance Turno</span>
+    <select id="modoBalance" style="width:auto; font-size:0.65rem; padding:2px 4px;">
+        <option value="actual">Ritmo Actual</option>
+        <option value="objetivo">Ritmo Objetivo</option>
+    </select>
+</div>
 <div class="res-value" id="balanceTurno">Sobra: 0 bines</div>
 <div class="info-subtext" id="detalleTurno">Tiempo efectivo total</div>
 </div>
@@ -122,7 +128,7 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 
 <div class="section-title">📤 Salidas (Envases / Pallets)</div>
 <div class="headers-tabla" style="grid-template-columns: 1fr 0.7fr 0.7fr 0.7fr 0.7fr 32px;">
-<div>Producto</div>
+<div>Descripción</div>
 <div>Cal.</div>
 <div>Envases</div>
 <div>Pallets</div>
@@ -132,9 +138,9 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <div id="salidasRows"></div>
 <button type="button" class="btn-add-row" id="btnAddSalida">+ Agregar producto de salida</button>
 
-<div class="section-title">♻️ Bines de Salida (1ª o 2ª / Reproceso)</div>
+<div class="section-title">♻️ Bines de Salida</div>
 <div class="headers-bines-salida">
-<div>Destino</div>
+<div>Descripción</div>
 <div>Cal.</div>
 <div>Bines</div>
 <div>Kg aprox.</div>
@@ -145,13 +151,13 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 
 <div class="results">
 <div class="res-card highlight full-width">
-<div class="res-title">Rendimiento por Calidad</div>
-<div class="res-value" id="rendimientoDesglosado" style="font-size:1rem; margin-top:2px;">1ª: 0.0% | 2ª: 0.0% | Ind: 0.0%</div>
+<div class="res-title">Rendimiento por Calidad y Merma</div>
+<div class="res-value" id="rendimientoDesglosado" style="font-size:0.95rem; margin-top:2px;">1ª: 0.0% | 2ª: 0.0% | Ind: 0.0% | Merma: 0.0%</div>
 <div class="info-subtext" id="baseEmpacables">Base: 0 bines empacables</div>
 </div>
 <div class="res-card full-width">
-<div class="res-title">Descarte Estimado</div>
-<div class="res-value" id="descarteEstimado">0.0 %</div>
+<div class="res-title">Porcentaje por Descripción</div>
+<div class="res-value" id="detallePorDesc" style="font-size:0.8rem; font-weight:normal; margin-top:4px; text-align:left; padding:0 4px;">-</div>
 </div>
 </div>
 
@@ -193,6 +199,7 @@ const limpiezaMins = document.getElementById('limpiezaMins');
 const descansoPrinMins = document.getElementById('descansoPrinMins');
 const descansoEstado = document.getElementById('descansoEstado');
 const cadenciaObjetivo = document.getElementById('cadenciaObjetivo');
+const modoBalance = document.getElementById('modoBalance');
 
 const lotesRowsContainer = document.getElementById('lotesRows');
 const btnAddLote = document.getElementById('btnAddLote');
@@ -213,7 +220,7 @@ const btnAddPausa = document.getElementById('btnAddPausa');
 
 const rendimientoDesglosadoEl = document.getElementById('rendimientoDesglosado');
 const baseEmpacablesEl = document.getElementById('baseEmpacables');
-const descarteEstimadoEl = document.getElementById('descarteEstimado');
+const detallePorDescEl = document.getElementById('detallePorDesc');
 const ceraIni = document.getElementById('ceraIni');
 const ceraFin = document.getElementById('ceraFin');
 const jabonIni = document.getElementById('jabonIni');
@@ -272,12 +279,12 @@ function addIngresoRow(desc = 'Piso 1', calidad = '1ª', envases = '', kg = '15'
     calcular();
 }
 
-function addSalidaRow(prod = 'Torito', calidad = '1ª', envases = '', pallets = '', kg = '15') {
+function addSalidaRow(desc = 'Torito', calidad = '1ª', envases = '', pallets = '', kg = '15') {
     const row = document.createElement('div');
     row.className = 'tabla-row';
     row.style.gridTemplateColumns = '1fr 0.7fr 0.7fr 0.7fr 0.7fr 32px';
     row.innerHTML = `
-        <input type="text" class="sal-prod" value="${prod}" placeholder="Producto">
+        <input type="text" class="sal-desc" value="${desc}" placeholder="Descripción">
         <select class="sal-calidad">
             <option value="1ª" ${calidad==='1ª'?'selected':''}>1ª</option>
             <option value="2ª" ${calidad==='2ª'?'selected':''}>2ª</option>
@@ -293,11 +300,11 @@ function addSalidaRow(prod = 'Torito', calidad = '1ª', envases = '', pallets = 
     calcular();
 }
 
-function addBinesSalidaRow(destino = 'Reproceso', calidad = '1ª', bines = '', kg = '320') {
+function addBinesSalidaRow(desc = 'Reproceso', calidad = '1ª', bines = '', kg = '320') {
     const row = document.createElement('div');
     row.className = 'bines-salida-row';
     row.innerHTML = `
-        <input type="text" class="bs-destino" value="${destino}" placeholder="Motivo / Destino">
+        <input type="text" class="bs-desc" value="${desc}" placeholder="Descripción">
         <select class="bs-calidad">
             <option value="1ª" ${calidad==='1ª'?'selected':''}>1ª</option>
             <option value="2ª" ${calidad==='2ª'?'selected':''}>2ª</option>
@@ -391,9 +398,10 @@ function calcular() {
     const binesVolcados = parseFloat(binesVolcadosInput.value) || 0;
     const diferenciaBinesActual = binesVolcados - binesIdealesHastaAhora;
 
+    let ritmoRealVal = 0;
     if (binesVolcados > 0 && horasTranscurridasHastaAhora > 0) {
-        const ritmoReal = binesVolcados / horasTranscurridasHastaAhora;
-        ritmoRealEstado.textContent = `${ritmoReal.toFixed(1)} bines/h`;
+        ritmoRealVal = binesVolcados / horasTranscurridasHastaAhora;
+        ritmoRealEstado.textContent = `${ritmoRealVal.toFixed(1)} bines/h`;
         if (diferenciaBinesActual >= 0) {
             ritmoRealEstado.style.color = 'var(--green-dark)';
             detalleRitmo.textContent = `Se vuelcan: +${diferenciaBinesActual} bines arriba de lo esperado`;
@@ -407,7 +415,14 @@ function calcular() {
         ritmoRealEstado.style.color = 'var(--text)';
     }
 
-    const binesSobrantesAlFinal = totalBinesIngreso - Math.round(binesIdealesTurno);
+    // Balance Turno según modo seleccionado (Ritmo Actual vs Ritmo Objetivo)
+    let binesProyectadosFin = 0;
+    if (modoBalance.value === 'actual' && ritmoRealVal > 0) {
+        binesProyectadosFin = binesVolcados + (ritmoRealVal * (minsEfectivos / 60 - horasTranscurridasHastaAhora));
+    } else {
+        binesProyectadosFin = binesIdealesTurno;
+    }
+    const binesSobrantesAlFinal = totalBinesIngreso - Math.round(binesProyectadosFin);
 
     if (totalBinesIngreso > 0) {
         if (binesSobrantesAlFinal > 0) {
@@ -422,62 +437,72 @@ function calcular() {
         balanceTurnoEl.style.color = 'var(--muted)';
     }
 
-    detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Obj. turno: ${Math.round(binesIdealesTurno)} bines)`;
+    detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Proyectado: ${Math.round(binesProyectadosFin)} bines)`;
 
-    // Calcular kg por calidad en las salidas (Pallets * Envases por pallet * Kg/u + Envases sueltos * Kg/u)
+    // Calcular kg de ingresos (pisos) para restar al rendimiento
+    let kgIngresos = 0;
+    ingresosRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
+        const envases = parseFloat(r.querySelector('.ing-envases').value) || 0;
+        const kgU = parseFloat(r.querySelector('.ing-kg').value) || 0;
+        kgIngresos += envases * kgU;
+    });
+
+    // Calcular kg por descripción y calidad en las salidas y bines de salida
     let kg1 = 0, kg2 = 0, kgInd = 0;
+    let descTotales = {};
+
     salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
-        const cal = r.querySelector('.sal-calidad').value;
+        const desc = r.querySelector('.sal-desc').value.trim() || 'Sin desc';
         const envasesSueltos = parseFloat(r.querySelector('.sal-envases').value) || 0;
         const pallets = parseFloat(r.querySelector('.sal-pallets').value) || 0;
         const kgU = parseFloat(r.querySelector('.sal-kg').value) || 0;
+        const cal = r.querySelector('.sal-calidad').value;
         
-        // Si hay pallets, asumimos que cada pallet trae envases según el campo o calculamos el total
-        // Total kg = (pallets * envases_por_pallet + envases_sueltos) * kgU
-        // Para simplificar y ser flexibles, si ponen pallets, multiplicamos pallets * envases_sueltos (como cantidad por pallet) + envases sueltos, o interpretamos envases como envases por pallet si hay pallets.
-        // Siguiendo el ejemplo: "1 pallet de 50 toritos cada uno + 50 cajas sueltas" -> Pallets=1, Envases(por pallet)=50, más las sueltas.
-        // Ajustamos la lógica: si pallets > 0, envases es por pallet. Total envases = (pallets * envases) + envases_sueltos. 
-        // O más directo: (pallets * envases_input) + envases_sueltos. Como tenemos un solo campo "Envases", si hay pallets se multiplica pallets * envases, y si además hay sueltos... para hacerlo simple y robusto:
-        // Total envases = (pallets > 0 ? (pallets * envases) : envases) + (si quisieran separado). 
-        // Hagámoslo directo: Si hay pallets, el input "Envases" representa cuántos envases trae cada pallet, y sumamos los sueltos si los hubiera, o simplemente: (pallets * envases_por_pallet) + envases_sueltos.
-        // Para que sea súper intuitivo: (Pallets * Envases) + EnvasesSueltos. Como tenemos un solo campo "Envases", interpretamos: 
-        let totalEnvases = (pallets > 0) ? (pallets * envasesSueltos) : envasesSueltos; 
-        // Si el usuario quiere poner pallets y además sueltos, con un solo campo de envases el estándar en empaque es: Pallets * (envases por pallet). Si hay sueltos, se agrega otro renglón. ¡Perfecto y limpio!
+        let totalEnvases = (pallets > 0) ? (pallets * envasesSueltos) : envasesSueltos;
         let totalKg = totalEnvases * kgU;
 
         if (cal === '1ª') kg1 += totalKg;
         else if (cal === '2ª') kg2 += totalKg;
         else if (cal === 'Industria') kgInd += totalKg;
+
+        descTotales[desc] = (descTotales[desc] || 0) + totalKg;
     });
 
-    // Calcular kg de bines de salida separados (Bines * Kg c/u)
     binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
+        const desc = r.querySelector('.bs-desc').value.trim() || 'Sin desc';
         const cal = r.querySelector('.bs-calidad').value;
         const b = parseFloat(r.querySelector('.bs-bines').value) || 0;
-        const kgBin = parseFloat(r.querySelector('.bs-kg').value) || 320;
-        const totalKgBin = b * kgBin;
+        const kAprox = parseFloat(r.querySelector('.bs-kg').value) || 320;
+        const totalKgBin = b * kAprox;
         
         if (cal === '1ª') kg1 += totalKgBin;
         else if (cal === '2ª') kg2 += totalKgBin;
         else if (cal === 'Industria') kgInd += totalKgBin;
+
+        descTotales[desc] = (descTotales[desc] || 0) + totalKgBin;
     });
 
     const pBin = parseFloat(pesoBin.value) || 330;
     const totalKgVolcados = binesVolcados * pBin;
+    const netoProcesadoKg = Math.max(0, totalKgVolcados - kgIngresos);
 
-    let binesEmpacables1 = totalKgVolcados > 0 ? (kg1 / pBin) : 0;
-    let binesEmpacables2 = totalKgVolcados > 0 ? (kg2 / pBin) : 0;
-    let binesEmpacablesInd = totalKgVolcados > 0 ? (kgInd / pBin) : 0;
-
-    let r1 = binesVolcados > 0 ? (binesEmpacables1 / binesVolcados) * 100 : 0;
-    let r2 = binesVolcados > 0 ? (binesEmpacables2 / binesVolcados) * 100 : 0;
-    let rInd = binesVolcados > 0 ? (binesEmpacablesInd / binesVolcados) * 100 : 0;
+    let r1 = netoProcesadoKg > 0 ? (kg1 / netoProcesadoKg) * 100 : 0;
+    let r2 = netoProcesadoKg > 0 ? (kg2 / netoProcesadoKg) * 100 : 0;
+    let rInd = netoProcesadoKg > 0 ? (kgInd / netoProcesadoKg) * 100 : 0;
     let rendimientoTotal = r1 + r2 + rInd;
-    let descarte = Math.max(0, 100 - rendimientoTotal);
+    let merma = Math.max(0, 100 - rendimientoTotal);
 
-    rendimientoDesglosadoEl.textContent = `1ª: ${r1.toFixed(1)}% | 2ª: ${r2.toFixed(1)}% | Ind: ${rInd.toFixed(1)}%`;
-    baseEmpacablesEl.textContent = `Base: ${(binesEmpacables1 + binesEmpacables2 + binesEmpacablesInd).toFixed(1)} bines empacables`;
-    descarteEstimadoEl.textContent = `${descarte.toFixed(1)} %`;
+    rendimientoDesglosadoEl.textContent = `1ª: ${r1.toFixed(1)}% | 2ª: ${r2.toFixed(1)}% | Ind: ${rInd.toFixed(1)}% | Merma: ${merma.toFixed(1)}%`;
+    baseEmpacablesEl.textContent = `Neto procesado: ${(netoProcesadoKg/1000).toFixed(2)} t`;
+
+    // Porcentaje por cada descripción cargada
+    let textoPorDesc = [];
+    let totalKgSalidas = kg1 + kg2 + kgInd;
+    for (let d in descTotales) {
+        let pct = totalKgSalidas > 0 ? (descTotales[d] / totalKgSalidas) * 100 : 0;
+        textoPorDesc.push(`• ${d}: ${pct.toFixed(1)}%`);
+    }
+    detallePorDescEl.textContent = textoPorDesc.length > 0 ? textoPorDesc.join(' | ') : 'Sin salidas cargadas';
 
     const toneladas = totalKgVolcados / 1000;
     const cIni = parseFloat(ceraIni.value) || 0;
@@ -492,7 +517,7 @@ function calcular() {
     consumoJabonEl.textContent = consumoJabon.toFixed(2);
 }
 
-[ritmoObjetivo, pesoBin, horaIni, horaActual, horaFin, limpiezaMins, descansoPrinMins, descansoEstado, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
+[ritmoObjetivo, pesoBin, horaIni, horaActual, horaFin, limpiezaMins, descansoPrinMins, descansoEstado, modoBalance, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
     if(el) el.addEventListener('input', calcular);
     if(el) el.addEventListener('change', calcular);
 });
@@ -524,8 +549,7 @@ btnWsp.addEventListener('click', () => {
 - Hora Actual: ${horaActual.value}
 - Bines volcados: ${binesVolcadosInput.value || 0}
 - Ritmo Real: ${ritmoRealEstado.textContent}
-- Rendimiento Desglosado: ${rendimientoDesglosadoEl.textContent}
-- Descarte Estimado: ${descarteEstimadoEl.textContent}
+- Rendimiento y Merma: ${rendimientoDesglosadoEl.textContent}
 - Consumo Cera: ${consumoCeraEl.textContent} L/t
 - Consumo Jabón: ${consumoJabonEl.textContent} L/t`;
     window.open(`https://api.wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
