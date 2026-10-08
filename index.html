@@ -3,22 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>Control de Volcado e Insumos - El Paruco</title>
+<title>El Paruco - Control de Volcado e Insumos</title>
 <style>
 :root{--bg:#f8fafc;--card:#fff;--orange:#f37324;--green-dark:#2d5738;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--wsp:#25d366;--pdf:#0284c7}
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 body{background:var(--bg);color:var(--text);display:flex;justify-content:center;padding:16px 12px 36px;min-height:100vh}
-.container{width:100%;max-width:460px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px 16px;box-shadow:0 10px 25px -5px rgba(45,87,56,.08)}
-.brand-header{text-align:center;margin-bottom:16px}h1{font-size:1.2rem;color:var(--green-dark)}.subtitle{font-size:.75rem;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.container{width:100%;max-width:480px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px 16px;box-shadow:0 10px 25px -5px rgba(45,87,56,.08)}
+.brand-header{text-align:center;margin-bottom:16px}.brand-logo{width:75px;height:75px;object-fit:contain;border-radius:50%;margin-bottom:4px}
+h1{font-size:1.2rem;color:var(--green-dark)}.subtitle{font-size:.75rem;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
 .section-title{font-size:.85rem;font-weight:700;color:var(--green-dark);margin:18px 0 10px;padding-bottom:4px;border-bottom:1.5px solid #edf2f7}
-.form-group{margin-bottom:12px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-label{display:block;font-size:.8rem;font-weight:600;color:var(--green-dark);margin-bottom:5px}
-input, select{width:100%;padding:9px 8px;background:#fdfdfd;border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:.85rem;outline:none}input:focus, select:focus{border-color:var(--orange)}
-.headers-lotes{display:grid;grid-template-columns:1fr 1fr 1fr 1.2fr 32px;gap:4px;font-size:.62rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
-.lote-row{display:grid;grid-template-columns:1fr 1fr 1fr 1.2fr 32px;gap:4px;align-items:center;margin-bottom:8px}
+.form-group{margin-bottom:12px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+label{display:block;font-size:.75rem;font-weight:600;color:var(--green-dark);margin-bottom:4px}
+input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:.8rem;outline:none}input:focus, select:focus{border-color:var(--orange)}
+.headers-lotes{display:grid;grid-template-columns:0.9fr 0.8fr 0.7fr 1fr 1fr 32px;gap:4px;font-size:.55rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
+.lote-row{display:grid;grid-template-columns:0.9fr 0.8fr 0.7fr 1fr 1fr 32px;gap:4px;align-items:center;margin-bottom:8px}
 .headers-empaque{display:grid;grid-template-columns:1.2fr 0.8fr 1fr 1fr 32px;gap:4px;font-size:.62rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
 .empaque-row{display:grid;grid-template-columns:1.2fr 0.8fr 1fr 1fr 32px;gap:4px;align-items:center;margin-bottom:8px}
-.btn-del-row{background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:36px;font-size:1.1rem;font-weight:bold;cursor:pointer}
+.btn-del-row{background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:34px;font-size:1.1rem;font-weight:bold;cursor:pointer}
 .btn-add-row{background:#f1f5f9;color:var(--green-dark);border:1.5px dashed var(--border);border-radius:8px;padding:8px;font-size:.8rem;font-weight:700;cursor:pointer;width:100%;margin:4px 0 12px}
 .results{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.res-card{background:#fafaf9;border-radius:12px;padding:10px 8px;border:1px solid var(--border);text-align:center}.res-card.highlight{background:#f0fdf4;border-color:#bbf7d0}.full-width{grid-column:span 2}.target-box{background:#fff7ed;border-color:#fed7aa}
 .res-title{font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px;font-weight:700}.res-value{font-size:1.25rem;font-weight:800;color:var(--green-dark)}.res-unit{font-size:.75rem;color:var(--muted);font-weight:500}.res-highlight{color:var(--orange)}.info-subtext{font-size:.7rem;color:var(--muted);margin-top:2px}
@@ -26,19 +27,19 @@ input, select{width:100%;padding:9px 8px;background:#fdfdfd;border:1.5px solid v
 .btn-pdf{margin-top:8px;width:100%;background:var(--pdf);color:white;border:none;padding:12px;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer}
 .btn-clear{margin-top:8px;width:100%;background:#f1f5f9;color:#64748b;border:1px solid var(--border);padding:10px;border-radius:12px;font-size:.8rem;font-weight:700;cursor:pointer}
 
-/* Estilos para impresión y generación de PDF limpia */
 @media print {
     body{background:#fff;padding:0}
     .container{border:none;box-shadow:none;max-width:100%;padding:0}
     button, .btn-add-row, .btn-del-row {display:none !important}
-    input, select{border:none;background:none;padding:0;font-size:.9rem;color:#000}
+    input, select{border:none;background:none;padding:0;font-size:.85rem;color:#000}
 }
 </style>
 </head>
 <body>
 <div class="container">
 <div class="brand-header">
-<h1>Control de Volcado e Insumos</h1><div class="subtitle">Gestión Independiente</div>
+<img src="logo.jpg" alt="Logo El Paruco" class="brand-logo" onerror="this.style.display='none'">
+<h1>Control de Volcado e Insumos</h1><div class="subtitle">El Paruco</div>
 </div>
 
 <div class="section-title">🎯 Velocidad y Turno</div>
@@ -46,9 +47,25 @@ input, select{width:100%;padding:9px 8px;background:#fdfdfd;border:1.5px solid v
 <div><label>Velocidad obj. (bines/h)</label><input type="number" id="ritmoObjetivo" value="30" min="1"></div>
 <div><label>Peso bin (kg)</label><input type="number" id="pesoBin" value="330"></div>
 </div>
+
+<div class="grid-3 form-group">
+<div><label>Hora Inicial</label><input type="time" id="horaIni" value="06:00"></div>
+<div><label>Hora Final</label><input type="time" id="horaFin" value="14:00"></div>
+<div><label>Limpieza (min)</label><input type="number" id="limpiezaMins" value="15"></div>
+</div>
+
 <div class="grid-2 form-group">
-<div><label>Duración turno (hs)</label><input type="number" id="horasTurno" value="8" step="0.5"></div>
-<div><label>Limpieza final (min)</label><input type="number" id="limpiezaMins" value="15"></div>
+<div>
+<label>Descanso princ. (30m)</label>
+<select id="descansoPrin">
+<option value="si">Sí (Ya pasó)</option>
+<option value="no">No pasó</option>
+</select>
+</div>
+<div>
+<label>Descanso extra (min)</label>
+<input type="number" id="descansoExtra" value="0" min="0">
+</div>
 </div>
 
 <div class="results" style="margin-top:4px;margin-bottom:12px">
@@ -58,20 +75,20 @@ input, select{width:100%;padding:9px 8px;background:#fdfdfd;border:1.5px solid v
 </div>
 </div>
 
-<div class="section-title">🍇 Lotes, Destino y Calidad</div>
+<div class="section-title">🍇 Lotes de Quinta (Fruta en Bruto)</div>
 <div class="headers-lotes">
 <div>Quinta</div>
 <div>Lote</div>
 <div>Bines</div>
-<div>Destino / Calidad</div>
+<div>Cosecha</div>
+<div>Remito</div>
 <div></div>
 </div>
 <div id="lotesRows"></div>
 <button type="button" class="btn-add-row" id="btnAddLote">+ Agregar lote</button>
 
-<div class="grid-2 form-group" style="margin-top:8px">
-<div><label>Bines volcados totales</label><input type="number" id="binesVolcados" min="0" placeholder="Ej: 30"></div>
-<div><label>Descanso principal</label><input type="text" value="30 min (a las 4h)" disabled style="background:#f1f5f9; font-size:0.8rem; text-align:center;"></div>
+<div class="form-group" style="margin-top:8px">
+<label>Bines volcados totales en el turno</label><input type="number" id="binesVolcados" min="0" placeholder="Ej: 30">
 </div>
 
 <div class="results" style="margin-bottom:12px">
@@ -136,9 +153,13 @@ input, select{width:100%;padding:9px 8px;background:#fdfdfd;border:1.5px solid v
 <script>
 const ritmoObjetivo = document.getElementById('ritmoObjetivo');
 const pesoBin = document.getElementById('pesoBin');
-const horasTurno = document.getElementById('horasTurno');
+const horaIni = document.getElementById('horaIni');
+const horaFin = document.getElementById('horaFin');
 const limpiezaMins = document.getElementById('limpiezaMins');
+const descansoPrin = document.getElementById('descansoPrin');
+const descansoExtra = document.getElementById('descansoExtra');
 const cadenciaObjetivo = document.getElementById('cadenciaObjetivo');
+
 const lotesRowsContainer = document.getElementById('lotesRows');
 const btnAddLote = document.getElementById('btnAddLote');
 const binesVolcadosInput = document.getElementById('binesVolcados');
@@ -160,21 +181,18 @@ const btnWsp = document.getElementById('btnWsp');
 const btnPdf = document.getElementById('btnPdf');
 const btnClear = document.getElementById('btnClear');
 
-function addLoteRow(quinta = '', lote = '', bines = '', destino = 'Proceso 1ª') {
+function addLoteRow(quinta = '', lote = '', bines = '', fecha = '', remito = '') {
     const row = document.createElement('div');
     row.className = 'lote-row';
     row.innerHTML = `
         <input type="text" class="lote-quinta" value="${quinta}" placeholder="Quinta">
         <input type="text" class="lote-numero" value="${lote}" placeholder="Lote">
         <input type="number" class="lote-bines" value="${bines}" placeholder="0">
-        <select class="lote-destino">
-            <option value="Proceso 1ª" ${destino==='Proceso 1ª'?'selected':''}>Proceso 1ª</option>
-            <option value="Proceso 2ª" ${destino==='Proceso 2ª'?'selected':''}>Proceso 2ª</option>
-            <option value="Industria" ${destino==='Industria'?'selected':''}>Industria</option>
-        </select>
+        <input type="date" class="lote-fecha" value="${fecha}">
+        <input type="text" class="lote-remito" value="${remito}" placeholder="Remito">
         <button type="button" class="btn-del-row">×</button>
     `;
-    row.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calcular));
+    row.querySelectorAll('input').forEach(el => el.addEventListener('input', calcular));
     row.querySelector('.btn-del-row').addEventListener('click', () => {
         row.remove();
         calcular();
@@ -183,7 +201,7 @@ function addLoteRow(quinta = '', lote = '', bines = '', destino = 'Proceso 1ª')
     calcular();
 }
 
-function addEmpaqueRow(prod = 'Fruta Fresca', calidad = '1ª', bultos = '', kg = '') {
+function addEmpaqueRow(prod = 'Citrus', calidad = '1ª', bultos = '', kg = '') {
     const row = document.createElement('div');
     row.className = 'empaque-row';
     row.innerHTML = `
@@ -210,9 +228,9 @@ btnAddRow.addEventListener('click', () => addEmpaqueRow());
 
 function calcular() {
     const objetivo = parseFloat(ritmoObjetivo.value) || 0;
-    const hTurno = parseFloat(horasTurno.value) || 8;
     const limpieza = parseFloat(limpiezaMins.value) || 15;
-    const descansoFijo = 30;
+    const descExtraMins = parseFloat(descansoExtra.value) || 0;
+    const pasoDescansoPrin = descansoPrin.value === 'si';
 
     if (objetivo > 0) {
         const segundosPorBin = Math.round((60 / objetivo) * 60);
@@ -223,15 +241,30 @@ function calcular() {
         cadenciaObjetivo.textContent = `-`;
     }
 
+    // Calcular duración de horas entre horaIni y horaFin
+    let totalMinsTurno = 480; // por defecto 8hs
+    if (horaIni.value && horaFin.value) {
+        const [h1, m1] = horaIni.value.split(':').map(Number);
+        const [h2, m2] = horaFin.value.split(':').map(Number);
+        let mins1 = h1 * 60 + m1;
+        let mins2 = h2 * 60 + m2;
+        if (mins2 < mins1) mins2 += 24 * 60; // cruce de medianoche
+        totalMinsTurno = mins2 - mins1;
+    }
+
+    // Descontar descansos y limpieza si ya pasaron
+    let totalDescansos = limpieza; // limpieza siempre se descuenta al final
+    if (pasoDescansoPrin) totalDescansos += 30; // 30 min de descanso principal
+    totalDescansos += descExtraMins;
+
+    const minsEfectivos = Math.max(0, totalMinsTurno - totalDescansos);
+    const horasEfectivas = minsEfectivos / 60;
+    const binesIdealesTurno = horasEfectivas * objetivo;
+
     let totalBinesIngreso = 0;
     lotesRowsContainer.querySelectorAll('.lote-row').forEach(r => {
         totalBinesIngreso += parseFloat(r.querySelector('.lote-bines').value) || 0;
     });
-
-    const totalMinsTurno = hTurno * 60;
-    const minsEfectivos = Math.max(0, totalMinsTurno - limpieza - descansoFijo);
-    const horasEfectivas = minsEfectivos / 60;
-    const binesIdealesTurno = horasEfectivas * objetivo;
 
     const binesVolcados = parseFloat(binesVolcadosInput.value) || 0;
     const binesSobrantesAlFinal = totalBinesIngreso - Math.round(binesIdealesTurno);
@@ -282,25 +315,29 @@ function calcular() {
     consumoJabonEl.textContent = consumoJabon.toFixed(2);
 }
 
-[ritmoObjetivo, pesoBin, horasTurno, limpiezaMins, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
+[ritmoObjetivo, pesoBin, horaIni, horaFin, limpiezaMins, descansoPrin, descansoExtra, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
     if(el) el.addEventListener('input', calcular);
+    if(el) el.addEventListener('change', calcular);
 });
 
 btnClear.addEventListener('click', () => {
-    document.querySelectorAll('input').forEach(i => i.value = '');
+    document.querySelectorAll('input').forEach(i => { if(i.type !== 'time' && i.type !== 'date') i.value = ''; });
     ritmoObjetivo.value = '30';
     pesoBin.value = '330';
-    horasTurno.value = '8';
+    horaIni.value = '06:00';
+    horaFin.value = '14:00';
     limpiezaMins.value = '15';
+    descansoPrin.value = 'si';
+    descansoExtra.value = '0';
     lotesRowsContainer.innerHTML = '';
     empaqueRowsContainer.innerHTML = '';
-    addLoteRow('Quinta 1', 'Lote A', 80, 'Proceso 1ª');
+    addLoteRow('Quinta 1', 'Lote A', 80, '', '');
     addEmpaqueRow('Citrus', '1ª', 26, 320);
     calcular();
 });
 
 btnWsp.addEventListener('click', () => {
-    const texto = `*📊 Control de Volcado e Insumos*
+    const texto = `*🍊 El Paruco - Control de Volcado e Insumos*
 - Bines volcados: ${binesVolcadosInput.value || 0}
 - Rendimiento Ajustado: ${rendimientoAjustadoEl.textContent}
 - Descarte Estimado: ${descarteEstimadoEl.textContent}
@@ -313,7 +350,7 @@ btnPdf.addEventListener('click', () => {
     window.print();
 });
 
-addLoteRow('Quinta 1', 'Lote 1', 80, 'Proceso 1ª');
+addLoteRow('Quinta 1', 'Lote 1', 80, '', '');
 addEmpaqueRow('Citrus', '1ª', 26, 320);
 </script>
 </body>
