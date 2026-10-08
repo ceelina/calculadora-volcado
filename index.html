@@ -17,8 +17,8 @@ label{display:block;font-size:.75rem;font-weight:600;color:var(--green-dark);mar
 input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:.8rem;outline:none}input:focus, select:focus{border-color:var(--orange)}
 .headers-lotes{display:grid;grid-template-columns:0.8fr 0.8fr 0.8fr 0.6fr 0.9fr 0.9fr 32px;gap:3px;font-size:.5rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
 .lote-row{display:grid;grid-template-columns:0.8fr 0.8fr 0.8fr 0.6fr 0.9fr 0.9fr 32px;gap:3px;align-items:center;margin-bottom:8px}
-.headers-tabla{display:grid;grid-template-columns:1fr 0.6fr 0.6fr 0.6fr 0.6fr 0.7fr 32px;gap:2px;font-size:.5rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
-.tabla-row{display:grid;grid-template-columns:1fr 0.6fr 0.6fr 0.6fr 0.6fr 0.7fr 32px;gap:2px;align-items:center;margin-bottom:8px}
+.headers-tabla{display:grid;grid-template-columns:1fr 0.5fr 0.5fr 0.6fr 0.6fr 0.6fr 32px;gap:2px;font-size:.5rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
+.tabla-row{display:grid;grid-template-columns:1fr 0.5fr 0.5fr 0.6fr 0.6fr 0.6fr 32px;gap:2px;align-items:center;margin-bottom:8px}
 .headers-bines-salida{display:grid;grid-template-columns:1fr 0.8fr 0.8fr 1fr 32px;gap:3px;font-size:.55rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
 .bines-salida-row{display:grid;grid-template-columns:1fr 0.8fr 0.8fr 1fr 32px;gap:3px;align-items:center;margin-bottom:8px}
 .pausa-row{display:grid;grid-template-columns:1fr 1.2fr 32px;gap:6px;align-items:center;margin-bottom:8px}
@@ -69,7 +69,7 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </div>
 
 <div class="form-group">
-<label>Retardo de línea (min) [Demora de fruta en batea a empaque]</label>
+<label>Retardo de línea (min) [Afecta solo al rendimiento]</label>
 <input type="number" id="retardoMins" value="10" min="0">
 </div>
 
@@ -120,7 +120,7 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </div>
 </div>
 
-<div class="section-title">📦 Ingresos (Envases de 1ª y 2ª)</div>
+<div class="section-title">📦 Ingresos (Pisos de Fruta / Restados)</div>
 <div class="headers-tabla">
 <div>Descripción</div>
 <div>Calidad</div>
@@ -132,7 +132,7 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <button type="button" class="btn-add-row" id="btnAddIngreso">+ Agregar ingreso</button>
 
 <div class="section-title">📤 Salidas (Envases / Pallets)</div>
-<div class="headers-tabla" style="grid-template-columns: 1fr 0.5fr 0.5fr 0.6fr 0.6fr 0.6fr 32px;">
+<div class="headers-tabla" style="grid-template-columns: 1fr 0.5f 0.5fr 0.6fr 0.6fr 0.6fr 32px;">
 <div>Descripción</div>
 <div>Cal.</div>
 <div>Pallets</div>
@@ -162,7 +162,7 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <div class="info-subtext" id="baseEmpacables">Base: 0 bines empacables</div>
 </div>
 <div class="res-card full-width">
-<div class="res-title">Porcentaje por Descripción</div>
+<div class="res-title">Porcentaje Agrupado (1ª, 2ª, Merma)</div>
 <div class="res-value" id="detallePorDesc" style="font-size:0.8rem; font-weight:normal; margin-top:4px; text-align:left; padding:0 4px;">-</div>
 </div>
 </div>
@@ -396,10 +396,7 @@ function calcular() {
     const descansoYaPasadoMins = (descansoEstado.value === 'si') ? descPrinConfig : 0;
     const pausaReal = totalPausasExtra + descansoYaPasadoMins;
     const minsRitmoReal = Math.max(0, minsDesdeInicio - pausaReal);
-    
-    // Aplicamos el retardo de línea para calcular el ritmo real de los bines que ya llegaron a empaque
-    const minsConRetardo = Math.max(0, minsRitmoReal - retardo);
-    const horasTranscurridasHastaAhora = minsConRetardo / 60;
+    const horasTranscurridasHastaAhora = minsRitmoReal / 60;
     const binesIdealesHastaAhora = Math.round(horasTranscurridasHastaAhora * objetivo);
 
     let totalBinesIngreso = 0;
@@ -416,14 +413,14 @@ function calcular() {
         ritmoRealEstado.textContent = `${ritmoRealVal.toFixed(1)} bines/h`;
         if (diferenciaBinesActual >= 0) {
             ritmoRealEstado.style.color = 'var(--green-dark)';
-            detalleRitmo.textContent = `Se vuelcan: +${diferenciaBinesActual} bines arriba (con retardo ${retardo}m)`;
+            detalleRitmo.textContent = `Se vuelcan: +${diferenciaBinesActual} bines arriba de lo esperado`;
         } else {
             ritmoRealEstado.style.color = 'var(--orange)';
             detalleRitmo.textContent = `Se vuelcan: ${Math.abs(diferenciaBinesActual)} bines abajo a esta hora`;
         }
     } else {
         ritmoRealEstado.textContent = `- bines/h`;
-        detalleRitmo.textContent = `Esperado a esta hora: ~${binesIdealesHastaAhora} bines`;
+        detalleRitmo.textContent = `Se vuelcan: ~${binesIdealesHastaAhora} bines esperados`;
         ritmoRealEstado.style.color = 'var(--text)';
     }
 
@@ -450,20 +447,18 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Proyectado: ${Math.round(binesProyectadosFin)} bines)`;
 
-    // Calcular kg de ingresos (pisos)
+    // Calcular kg de ingresos (pisos) y sumarlos a las salidas netas efectivas
     let kgIngresos = 0;
     ingresosRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
         const envases = parseFloat(r.querySelector('.ing-envases').value) || 0;
         const kgU = parseFloat(r.querySelector('.ing-kg').value) || 0;
-        kgIngresos += envases * kgU;
+        const totalKgIng = envases * kgU;
+        kgIngresos += totalKgIng;
     });
 
-    // Calcular kg por descripción y calidad en las salidas (Pallets * Env/Pallet + Sueltos) * Kg/u
     let kg1 = 0, kg2 = 0, kgInd = 0;
-    let descTotales = {};
 
     salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
-        const desc = r.querySelector('.sal-desc').value.trim() || 'Sin desc';
         const pallets = parseFloat(r.querySelector('.sal-pallets').value) || 0;
         const envPallet = parseFloat(r.querySelector('.sal-envpallet').value) || 0;
         const sueltos = parseFloat(r.querySelector('.sal-sueltos').value) || 0;
@@ -475,13 +470,9 @@ function calcular() {
 
         if (cal === '1ª') kg1 += totalKg;
         else if (cal === '2ª') kg2 += totalKg;
-        else if (cal === 'Industria') kgInd += totalKg;
-
-        descTotales[desc] = (descTotales[desc] || 0) + totalKg;
     });
 
     binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
-        const desc = r.querySelector('.bs-desc').value.trim() || 'Sin desc';
         const cal = r.querySelector('.bs-calidad').value;
         const b = parseFloat(r.querySelector('.bs-bines').value) || 0;
         const kAprox = parseFloat(r.querySelector('.bs-kg').value) || 320;
@@ -490,30 +481,39 @@ function calcular() {
         if (cal === '1ª') kg1 += totalKgBin;
         else if (cal === '2ª') kg2 += totalKgBin;
         else if (cal === 'Industria') kgInd += totalKgBin;
+    });
 
-        descTotales[desc] = (descTotales[desc] || 0) + totalKgBin;
+    // Sumar los ingresos (pisos) a las salidas de 1era o 2era según corresponda en los inputs de ingresos
+    ingresosRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
+        const cal = r.querySelector('.ing-calidad').value;
+        const envases = parseFloat(r.querySelector('.ing-envases').value) || 0;
+        const kgU = parseFloat(r.querySelector('.ing-kg').value) || 0;
+        const totalKgIng = envases * kgU;
+        if (cal === '1ª') kg1 += totalKgIng;
+        else if (cal === '2ª') kg2 += totalKgIng;
     });
 
     const pBin = parseFloat(pesoBin.value) || 330;
-    const totalKgVolcados = binesVolcados * pBin;
-    const netoProcesadoKg = Math.max(0, totalKgVolcados - kgIngresos);
+    
+    // Aplicar el retardo de línea ajustando los bines volcados efectivos para el rendimiento
+    const binesVolcadosParaRendimiento = Math.max(0, binesVolcados - (retardo / 60) * objetivo);
+    const totalKgVolcados = binesVolcadosParaRendimiento * pBin;
 
-    let r1 = netoProcesadoKg > 0 ? (kg1 / netoProcesadoKg) * 100 : 0;
-    let r2 = netoProcesadoKg > 0 ? (kg2 / netoProcesadoKg) * 100 : 0;
-    let rInd = netoProcesadoKg > 0 ? (kgInd / netoProcesadoKg) * 100 : 0;
+    let binesEmpacables1 = totalKgVolcados > 0 ? (kg1 / pBin) : 0;
+    let binesEmpacables2 = totalKgVolcados > 0 ? (kg2 / pBin) : 0;
+    let binesEmpacablesInd = totalKgVolcados > 0 ? (kgInd / pBin) : 0;
+
+    let r1 = totalKgVolcados > 0 ? (kg1 / totalKgVolcados) * 100 : 0;
+    let r2 = totalKgVolcados > 0 ? (kg2 / totalKgVolcados) * 100 : 0;
+    let rInd = totalKgVolcados > 0 ? (kgInd / totalKgVolcados) * 100 : 0;
     let rendimientoTotal = r1 + r2 + rInd;
     let merma = Math.max(0, 100 - rendimientoTotal);
 
     rendimientoDesglosadoEl.textContent = `1ª: ${r1.toFixed(1)}% | 2ª: ${r2.toFixed(1)}% | Ind: ${rInd.toFixed(1)}% | Merma: ${merma.toFixed(1)}%`;
-    baseEmpacablesEl.textContent = `Neto procesado: ${(netoProcesadoKg/1000).toFixed(2)} t`;
+    baseEmpacablesEl.textContent = `Base cálculo (con retardo): ${(totalKgVolcados/1000).toFixed(2)} t`;
 
-    let textoPorDesc = [];
-    let totalKgSalidas = kg1 + kg2 + kgInd;
-    for (let d in descTotales) {
-        let pct = totalKgSalidas > 0 ? (descTotales[d] / totalKgSalidas) * 100 : 0;
-        textoPorDesc.push(`• ${d}: ${pct.toFixed(1)}%`);
-    }
-    detallePorDescEl.textContent = textoPorDesc.length > 0 ? textoPorDesc.join(' | ') : 'Sin salidas cargadas';
+    // Porcentaje agrupado en 1era, 2da y Merma
+    detallePorDescEl.textContent = `• 1ª: ${r1.toFixed(1)}%  |  • 2ª: ${r2.toFixed(1)}%  |  • Merma: ${merma.toFixed(1)}%`;
 
     const toneladas = totalKgVolcados / 1000;
     const cIni = parseFloat(ceraIni.value) || 0;
