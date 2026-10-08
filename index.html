@@ -53,16 +53,17 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 
 <div class="grid-3 form-group">
 <div><label>Hora Inicial</label><input type="time" id="horaIni" value="06:00"></div>
+<div><label>Hora Actual</label><input type="time" id="horaActual"></div>
 <div><label>Hora Final</label><input type="time" id="horaFin" value="14:00"></div>
-<div><label>Limpieza (min)</label><input type="number" id="limpiezaMins" value="15" min="0"></div>
 </div>
 
-<div class="grid-2 form-group">
-<div><label>Descanso principal (min)</label><input type="number" id="descansoPrinMins" value="30" min="0"></div>
-<div><label>¿Ya pasó el descanso?</label>
+<div class="grid-3 form-group">
+<div><label>Limpieza (min)</label><input type="number" id="limpiezaMins" value="15" min="0"></div>
+<div><label>Descanso (min)</label><input type="number" id="descansoPrinMins" value="30" min="0"></div>
+<div><label>¿Ya pasó descanso?</label>
 <select id="descansoEstado">
-<option value="si">Sí (Ya pasó)</option>
-<option value="no" selected>No (Falta pasar)</option>
+<option value="si">Sí</option>
+<option value="no" selected>No</option>
 </select>
 </div>
 </div>
@@ -91,19 +92,19 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <button type="button" class="btn-add-row" id="btnAddLote">+ Agregar lote</button>
 
 <div class="form-group" style="margin-top:8px">
-<label>Bines volcados totales en el turno</label><input type="number" id="binesVolcados" min="0" placeholder="Ej: 30">
+<label>Bines volcados totales hasta esta hora</label><input type="number" id="binesVolcados" min="0" placeholder="Ej: 30">
 </div>
 
 <div class="results" style="margin-bottom:12px">
 <div class="res-card full-width">
-<div class="res-title">Velocidad Real vs Objetivo</div>
+<div class="res-title">Ritmo Real a la Hora Actual</div>
 <div class="res-value" id="ritmoRealEstado">- bines/h</div>
-<div class="info-subtext" id="detalleRitmo">Ingrese bines volcados</div>
+<div class="info-subtext" id="detalleRitmo">Comparado con el objetivo a esta hora</div>
 </div>
 <div class="res-card full-width">
 <div class="res-title">Balance al Finalizar Turno</div>
 <div class="res-value" id="balanceTurno">Sobra: 0 bines</div>
-<div class="info-subtext" id="detalleTurno">Tiempo efectivo: 7h 45m</div>
+<div class="info-subtext" id="detalleTurno">Tiempo efectivo total</div>
 </div>
 </div>
 
@@ -184,6 +185,7 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 const ritmoObjetivo = document.getElementById('ritmoObjetivo');
 const pesoBin = document.getElementById('pesoBin');
 const horaIni = document.getElementById('horaIni');
+const horaActual = document.getElementById('horaActual');
 const horaFin = document.getElementById('horaFin');
 const limpiezaMins = document.getElementById('limpiezaMins');
 const descansoPrinMins = document.getElementById('descansoPrinMins');
@@ -219,6 +221,15 @@ const consumoJabonEl = document.getElementById('consumoJabon');
 const btnWsp = document.getElementById('btnWsp');
 const btnPdf = document.getElementById('btnPdf');
 const btnClear = document.getElementById('btnClear');
+
+// Inicializar hora actual con la hora del sistema
+function inicializarHoraActual() {
+    const ahora = new Date();
+    const hh = String(ahora.getHours()).padStart(2, '0');
+    const mm = String(ahora.getMinutes()).padStart(2, '0');
+    horaActual.value = `${hh}:${mm}`;
+}
+inicializarHoraActual();
 
 function addLoteRow(quinta = '', lote = '', bines = '', fecha = '', remito = '') {
     const row = document.createElement('div');
@@ -342,25 +353,30 @@ function calcular() {
 
     let totalMinsTurno = 480;
     let minsDesdeInicio = 0;
-    if (horaIni.value && horaFin.value) {
+    if (horaIni.value && horaFin.value && horaActual.value) {
         const [h1, m1] = horaIni.value.split(':').map(Number);
+        const [hAct_h, hAct_m] = horaActual.value.split(':').map(Number);
         const [h2, m2] = horaFin.value.split(':').map(Number);
+        
         let mins1 = h1 * 60 + m1;
+        let minsAct = hAct_h * 60 + hAct_m;
         let mins2 = h2 * 60 + m2;
+        
         if (mins2 < mins1) mins2 += 24 * 60;
-        totalMinsTurno = mins2 - mins1;
+        if (minsAct < mins1 && mins2 > 24*60) minsAct += 24*60;
 
-        // Calcular hora actual transcurrida simulada para ver ritmo parcial
-        const ahora = new Date();
-        let minsActuales = ahora.getHours() * 60 + ahora.getMinutes();
-        if (minsActuales < mins1 && mins2 > 24*60) minsActuales += 24*60;
-        minsDesdeInicio = Math.max(0, Math.min(minsActuales - mins1, totalMinsTurno));
+        totalMinsTurno = mins2 - mins1;
+        minsDesdeInicio = Math.max(0, Math.min(minsAct - mins1, totalMinsTurno));
     }
 
     const totalDescuentos = limpieza + descPrin + totalPausasExtra;
     const minsEfectivos = Math.max(0, totalMinsTurno - totalDescuentos);
-    const horasEfectivas = minsEfectivos / 60;
+    const horasEfectivas = minsEfectivas / 60;
     const binesIdealesTurno = horasEfectivas * objetivo;
+
+    // Bines que deberíamos llevar volcados HASTA LA HORA ACTUAL
+    const horasTranscurridasHastaAhora = Math.max(0, (minsDesdeInicio - totalDescuentos) / 60);
+    const binesIdealesHastaAhora = Math.round(horasTranscurridasHastaAhora * objetivo);
 
     let totalBinesIngreso = 0;
     lotesRowsContainer.querySelectorAll('.lote-row').forEach(r => {
@@ -368,26 +384,21 @@ function calcular() {
     });
 
     const binesVolcados = parseFloat(binesVolcadosInput.value) || 0;
-    
-    // Calcular velocidad real (bines / hora transcurrida efectiva)
-    let horasTranscurridasEfectivas = Math.max(0.1, (minsDesdeInicio - totalDescuentos) / 60);
-    if (minsDesdeInicio === 0) horasTranscurridasEfectivas = horasEfectivas > 0 ? horasEfectivas : 1; // fallback si no toma la hora del sistema
-    
-    const ritmoReal = binesVolcados / horasTranscurridasEfectivas;
-    const diferenciaRitmo = Math.round(ritmoReal - objetivo);
+    const diferenciaBinesActual = binesVolcados - binesIdealesHastaAhora;
 
-    if (binesVolcados > 0) {
+    if (binesVolcados > 0 && minsDesdeInicio > 0) {
+        const ritmoReal = binesVolcados / Math.max(0.1, horasTranscurridasHastaAhora);
         ritmoRealEstado.textContent = `${ritmoReal.toFixed(1)} bines/h`;
-        if (diferenciaRitmo >= 0) {
+        if (diferenciaBinesActual >= 0) {
             ritmoRealEstado.style.color = 'var(--green-dark)';
-            detalleRitmo.textContent = `¡Muy bien! Estás +${diferenciaRitmo} b/h arriba del objetivo`;
+            detalleRitmo.textContent = `Vas +${diferenciaBinesActual} bines arriba de lo esperado a esta hora`;
         } else {
             ritmoRealEstado.style.color = 'var(--orange)';
-            detalleRitmo.textContent = `Atrasado: ${Math.abs(diferenciaRitmo)} b/h debajo del objetivo`;
+            detalleRitmo.textContent = `Atrasado: vas ${Math.abs(diferenciaBinesActual)} bines abajo a esta hora`;
         }
     } else {
         ritmoRealEstado.textContent = `- bines/h`;
-        detalleRitmo.textContent = `Ingrese bines volcados para calcular`;
+        detalleRitmo.textContent = `Esperado a esta hora: ~${binesIdealesHastaAhora} bines`;
         ritmoRealEstado.style.color = 'var(--text)';
     }
 
@@ -456,7 +467,7 @@ function calcular() {
     consumoJabonEl.textContent = consumoJabon.toFixed(2);
 }
 
-[ritmoObjetivo, pesoBin, horaIni, horaFin, limpiezaMins, descansoPrinMins, descansoEstado, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
+[ritmoObjetivo, pesoBin, horaIni, horaActual, horaFin, limpiezaMins, descansoPrinMins, descansoEstado, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
     if(el) el.addEventListener('input', calcular);
     if(el) el.addEventListener('change', calcular);
 });
@@ -466,6 +477,7 @@ btnClear.addEventListener('click', () => {
     ritmoObjetivo.value = '30';
     pesoBin.value = '330';
     horaIni.value = '06:00';
+    inicializarHoraActual();
     horaFin.value = '14:00';
     limpiezaMins.value = '15';
     descansoPrinMins.value = '30';
@@ -484,6 +496,7 @@ btnClear.addEventListener('click', () => {
 
 btnWsp.addEventListener('click', () => {
     const texto = `*🍊 El Paruco - Control de Volcado e Insumos*
+- Hora Actual: ${horaActual.value}
 - Bines volcados: ${binesVolcadosInput.value || 0}
 - Ritmo Real: ${ritmoRealEstado.textContent}
 - Rendimiento Desglosado: ${rendimientoDesglosadoEl.textContent}
