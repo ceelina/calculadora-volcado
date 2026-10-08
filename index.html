@@ -222,7 +222,6 @@ const btnWsp = document.getElementById('btnWsp');
 const btnPdf = document.getElementById('btnPdf');
 const btnClear = document.getElementById('btnClear');
 
-// Inicializar hora actual con la hora del sistema
 function ponerHoraActual() {
     const ahora = new Date();
     const hh = String(ahora.getHours()).padStart(2, '0');
@@ -354,8 +353,6 @@ function calcular() {
         cadenciaObjetivo.textContent = `-`;
     }
 
-    // No usamos cruces de medianoche: si la hora actual es anterior a la inicial,
-    // el tiempo transcurrido queda en 0 hasta que se corrija la hora.
     let totalMinsTurno = 0;
     let minsDesdeInicio = 0;
     if (horaIni.value && horaFin.value) {
@@ -374,8 +371,6 @@ function calcular() {
     const horasEfectivas = minsEfectivos / 60;
     const binesIdealesTurno = horasEfectivas * objetivo;
 
-    // RITMO REAL: bines volcados / tiempo que realmente transcurrió.
-    // Solo descontamos pausas que ya fueron registradas como ocurridas.
     const pausaReal = totalPausasExtra + (descansoEstado.value === 'si' ? descPrin : 0);
     const minsRitmoReal = Math.max(0, minsDesdeInicio - pausaReal);
     const horasTranscurridasHastaAhora = minsRitmoReal / 60;
@@ -422,7 +417,6 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Obj. turno: ${Math.round(binesIdealesTurno)} bines)`;
 
-    // Calcular kg por calidad en las salidas
     let kg1 = 0, kg2 = 0, kgInd = 0;
     salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
         const cal = r.querySelector('.sal-calidad').value;
@@ -513,7 +507,6 @@ btnPdf.addEventListener('click', () => {
     window.print();
 });
 
-// Inicializar filas de ejemplo
 addLoteRow('Quinta 1', 'Lote 1', 80, '', '');
 addIngresoRow('Piso 1', '1ª', 1, 320);
 addSalidaRow('Torito', '1ª', 26, 1, 15);
