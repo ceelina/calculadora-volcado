@@ -17,8 +17,10 @@ label{display:block;font-size:.75rem;font-weight:600;color:var(--green-dark);mar
 input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:.8rem;outline:none}input:focus, select:focus{border-color:var(--orange)}
 .headers-lotes{display:grid;grid-template-columns:0.9fr 0.8fr 0.7fr 1fr 1fr 32px;gap:4px;font-size:.55rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
 .lote-row{display:grid;grid-template-columns:0.9fr 0.8fr 0.7fr 1fr 1fr 32px;gap:4px;align-items:center;margin-bottom:8px}
-.headers-tabla{display:grid;grid-template-columns:1.1fr 0.8fr 0.9fr 0.9fr 32px;gap:4px;font-size:.6rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
-.tabla-row{display:grid;grid-template-columns:1.1fr 0.8fr 0.9fr 0.9fr 32px;gap:4px;align-items:center;margin-bottom:8px}
+.headers-tabla{display:grid;grid-template-columns:1.1fr 0.7fr 0.8fr 0.8fr 0.8fr 32px;gap:3px;font-size:.55rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
+.tabla-row{display:grid;grid-template-columns:1.1fr 0.7fr 0.8fr 0.8fr 0.8fr 32px;gap:3px;align-items:center;margin-bottom:8px}
+.headers-bines-salida{display:grid;grid-template-columns:1.2fr 0.8fr 1fr 32px;gap:4px;font-size:.6rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
+.bines-salida-row{display:grid;grid-template-columns:1.2fr 0.8fr 1fr 32px;gap:4px;align-items:center;margin-bottom:8px}
 .pausa-row{display:grid;grid-template-columns:1fr 1.2fr 32px;gap:6px;align-items:center;margin-bottom:8px}
 .btn-del-row{background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:34px;font-size:1.1rem;font-weight:bold;cursor:pointer}
 .btn-add-row{background:#f1f5f9;color:var(--green-dark);border:1.5px dashed var(--border);border-radius:8px;padding:8px;font-size:.8rem;font-weight:700;cursor:pointer;width:100%;margin:4px 0 12px}
@@ -100,9 +102,9 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </div>
 </div>
 
-<div class="section-title">📦 Ingresos (Pisos de distintos Kg)</div>
+<div class="section-title">📦 Ingresos (Pisos de Fruta)</div>
 <div class="headers-tabla">
-<div>Descripción / Piso</div>
+<div>Descripción</div>
 <div>Calidad</div>
 <div>Cant.</div>
 <div>Kg c/u</div>
@@ -111,16 +113,27 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <div id="ingresosRows"></div>
 <button type="button" class="btn-add-row" id="btnAddIngreso">+ Agregar piso de ingreso</button>
 
-<div class="section-title">📤 Salidas (Productos: Bines o Cajas)</div>
-<div class="headers-tabla">
-<div>Tipo (Bin/Caja)</div>
-<div>Calidad</div>
-<div>Cant.</div>
-<div>Kg c/u</div>
+<div class="section-title">📤 Salidas (Productos empacados)</div>
+<div class="headers-tabla" style="grid-template-columns: 1fr 0.7fr 0.7fr 0.7fr 0.7fr 32px;">
+<div>Producto</div>
+<div>Cal.</div>
+<div>Bultos</div>
+<div>Pallets</div>
+<div>Kg/u</div>
 <div></div>
 </div>
 <div id="salidasRows"></div>
 <button type="button" class="btn-add-row" id="btnAddSalida">+ Agregar producto de salida</button>
+
+<div class="section-title">♻️ Bines de Salida (Fruta guardada / Reproceso)</div>
+<div class="headers-bines-salida">
+<div>Destino / Motivo</div>
+<div>Bines</div>
+<div>Kg aprox.</div>
+<div></div>
+</div>
+<div id="binesSalidaRows"></div>
+<button type="button" class="btn-add-row" id="btnAddBinesSalida">+ Agregar bines de salida</button>
 
 <div class="results">
 <div class="res-card highlight full-width">
@@ -182,6 +195,8 @@ const ingresosRowsContainer = document.getElementById('ingresosRows');
 const btnAddIngreso = document.getElementById('btnAddIngreso');
 const salidasRowsContainer = document.getElementById('salidasRows');
 const btnAddSalida = document.getElementById('btnAddSalida');
+const binesSalidaRowsContainer = document.getElementById('binesSalidaRows');
+const btnAddBinesSalida = document.getElementById('btnAddBinesSalida');
 const pausasRowsContainer = document.getElementById('pausasRows');
 const btnAddPausa = document.getElementById('btnAddPausa');
 
@@ -234,25 +249,39 @@ function addIngresoRow(desc = 'Piso 1', calidad = '1ª', cant = '', kg = '') {
     calcular();
 }
 
-function addSalidaRow(tipo = 'Caja', calidad = '1ª', cant = '', kg = '') {
+function addSalidaRow(prod = 'Torito', calidad = '1ª', bultos = '', pallets = '', kg = '') {
     const row = document.createElement('div');
     row.className = 'tabla-row';
+    row.style.gridTemplateColumns = '1fr 0.7fr 0.7fr 0.7fr 0.7fr 32px';
     row.innerHTML = `
-        <select class="sal-tipo">
-            <option value="Caja" ${tipo==='Caja'?'selected':''}>Caja</option>
-            <option value="Bin" ${tipo==='Bin'?'selected':''}>Bin</option>
-        </select>
+        <input type="text" class="sal-prod" value="${prod}" placeholder="Producto">
         <select class="sal-calidad">
             <option value="1ª" ${calidad==='1ª'?'selected':''}>1ª</option>
             <option value="2ª" ${calidad==='2ª'?'selected':''}>2ª</option>
         </select>
-        <input type="number" class="sal-cant" value="${cant}" placeholder="Cant">
-        <input type="number" class="sal-kg" value="${kg}" placeholder="Kg">
+        <input type="number" class="sal-bultos" value="${bultos}" placeholder="Bultos">
+        <input type="number" class="sal-pallets" value="${pallets}" placeholder="Pallets">
+        <input type="number" class="sal-kg" value="${kg}" placeholder="Kg/u">
         <button type="button" class="btn-del-row">×</button>
     `;
     row.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calcular));
     row.querySelector('.btn-del-row').addEventListener('click', () => { row.remove(); calcular(); });
     salidasRowsContainer.appendChild(row);
+    calcular();
+}
+
+function addBinesSalidaRow(destino = 'Guardado / Reproceso', bines = '', kg = '') {
+    const row = document.createElement('div');
+    row.className = 'bines-salida-row';
+    row.innerHTML = `
+        <input type="text" class="bs-destino" value="${destino}" placeholder="Motivo / Destino">
+        <input type="number" class="bs-bines" value="${bines}" placeholder="Bines">
+        <input type="number" class="bs-kg" value="${kg}" placeholder="Kg aprox">
+        <button type="button" class="btn-del-row">×</button>
+    `;
+    row.querySelectorAll('input').forEach(el => el.addEventListener('input', calcular));
+    row.querySelector('.btn-del-row').addEventListener('click', () => { row.remove(); calcular(); });
+    binesSalidaRowsContainer.appendChild(row);
     calcular();
 }
 
@@ -279,6 +308,7 @@ function addPausaRow(mins = '', razon = 'Embalado') {
 btnAddLote.addEventListener('click', () => addLoteRow());
 btnAddIngreso.addEventListener('click', () => addIngresoRow());
 btnAddSalida.addEventListener('click', () => addSalidaRow());
+btnAddBinesSalida.addEventListener('click', () => addBinesSalidaRow());
 btnAddPausa.addEventListener('click', () => addPausaRow());
 
 function calcular() {
@@ -286,7 +316,6 @@ function calcular() {
     const limpieza = parseFloat(limpiezaMins.value) || 15;
     const descPrin = descansoEstado.value === 'si' ? (parseFloat(descansoPrinMins.value) || 0) : 0;
 
-    // Sumar minutos de pausas adicionales categorizadas
     let totalPausasExtra = 0;
     pausasRowsContainer.querySelectorAll('.pausa-row').forEach(r => {
         totalPausasExtra += parseFloat(r.querySelector('.pausa-mins').value) || 0;
@@ -339,12 +368,12 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Obj. turno: ${Math.round(binesIdealesTurno)} bines)`;
 
-    // Calcular kg netos de salidas (productos) para rendimiento
+    // Calcular kg netos de salidas (productos empacados: bultos * kg/u)
     let totalKgNetoSalidas = 0;
     salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
-        const c = parseFloat(r.querySelector('.sal-cant').value) || 0;
-        const k = parseFloat(r.querySelector('.sal-kg').value) || 0;
-        totalKgNetoSalidas += c * k;
+        const bultos = parseFloat(r.querySelector('.sal-bultos').value) || 0;
+        const kgU = parseFloat(r.querySelector('.sal-kg').value) || 0;
+        totalKgNetoSalidas += bultos * kgU;
     });
 
     const pBin = parseFloat(pesoBin.value) || 330;
@@ -388,10 +417,12 @@ btnClear.addEventListener('click', () => {
     lotesRowsContainer.innerHTML = '';
     ingresosRowsContainer.innerHTML = '';
     salidasRowsContainer.innerHTML = '';
+    binesSalidaRowsContainer.innerHTML = '';
     pausasRowsContainer.innerHTML = '';
     addLoteRow('Quinta 1', 'Lote A', 80, '', '');
     addIngresoRow('Piso 1', '1ª', 1, 320);
-    addSalidaRow('Caja', '1ª', 26, 15);
+    addSalidaRow('Torito', '1ª', 26, 1, 15);
+    addBinesSalidaRow('Guardado Reproceso', 2, 660);
     calcular();
 });
 
@@ -412,7 +443,8 @@ btnPdf.addEventListener('click', () => {
 // Inicializar filas de ejemplo
 addLoteRow('Quinta 1', 'Lote 1', 80, '', '');
 addIngresoRow('Piso 1', '1ª', 1, 320);
-addSalidaRow('Caja', '1ª', 26, 15);
+addSalidaRow('Torito', '1ª', 26, 1, 15);
+addBinesSalidaRow('Guardado Reproceso', 2, 660);
 </script>
 </body>
 </html>
