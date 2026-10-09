@@ -396,10 +396,27 @@ function poblarSelectLotes(selectId, modo = 'stock') {
 }
 
 function sincronizarGoogleSheets() {
-    alert('Sincronización con Google Sheets lista para conectar con la API.');
-}
+    const urlWebapp = "https://script.google.com/macros/s/AKfycbwS0uRA_oH_ZLi499j8xvIe4j_8UMcggM-kJURBDAb1smjvafMt9GW3SLRKxfnYwixq/exec";
+    
+    // Ejemplo para enviar los ingresos guardados
+    let ingresos = JSON.parse(localStorage.getItem('paruco_ingresos') || '[]');
+    if(ingresos.length === 0) {
+        alert('No hay datos nuevos para sincronizar.');
+        return;
+    }
 
-renderStockPlaya();
-</script>
-</body>
-</html>
+    // Enviamos el último ingreso registrado como ejemplo
+    let ultimoIngreso = ingresos[0];
+    let payload = {
+        tipo: "Ingresos",
+        valores: [ultimoIngreso.fecha, ultimoIngreso.quinta, ultimoIngreso.lote, ultimoIngreso.variedad, ultimoIngreso.binesBuenos, ultimoIngreso.destino]
+    };
+
+    fetch(urlWebapp, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+    })
+    .then(() => alert('¡Sincronizado con Google Sheets con éxito!'))
+    .catch(err => alert('Error al sincronizar: ' + err));
+}
