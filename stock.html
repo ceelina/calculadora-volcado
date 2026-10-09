@@ -396,7 +396,34 @@ function poblarSelectLotes(selectId, modo = 'stock') {
 }
 
 function sincronizarGoogleSheets() {
-    alert('Sincronización con Google Sheets lista.');
+    const urlWebapp = "https://script.google.com/macros/s/AKfycbxKhCoVSJ380K3ZdS2YrTH06APFQ0A54zpa9WLax5BYpSiRYh9PGZ7NrLm--KBm7f4/exec";
+    
+    let ingresos = obtenerIngresos();
+    let salidas = obtenerSalidas();
+    let movimientos = obtenerMovimientos();
+
+    if(ingresos.length === 0 && salidas.length === 0) {
+        alert('No hay registros para sincronizar.');
+        return;
+    }
+
+    let payload = {
+        ingresos: ingresos,
+        salidas: salidas,
+        movimientos: movimientos
+    };
+
+    fetch(urlWebapp, {
+        method: "POST",
+        mode: "no-cors",
+        body: JSON.stringify(payload)
+    })
+    .then(() => {
+        alert('¡Sincronizado con Google Sheets con éxito!');
+    })
+    .catch(err => {
+        alert('Error al sincronizar: ' + err);
+    });
 }
 
 renderStockPlaya();
