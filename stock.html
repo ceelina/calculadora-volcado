@@ -402,7 +402,7 @@ function sincronizarGoogleSheets() {
     let salidas = obtenerSalidas();
     let movimientos = obtenerMovimientos();
 
-    if(ingresos.length === 0 && salidas.length === 0) {
+    if(ingresos.length === 0 && salidas.length === 0 && movimientos.length === 0) {
         alert('No hay registros para sincronizar.');
         return;
     }
