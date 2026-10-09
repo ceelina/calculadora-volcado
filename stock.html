@@ -396,7 +396,7 @@ function poblarSelectLotes(selectId, modo = 'stock') {
 }
 
 function sincronizarGoogleSheets() {
-    const urlWebapp = "https://script.google.com/macros/s/AKfycbyDZsIye6CKu0JoicXdr6xYT_ZAr8kvtdcxmciKBnEmAeHSDGl6dO9ZkcN3y8IdHZo2/exec";
+    const urlWebapp = "https://script.google.com/macros/s/AKfycbz70n3ojY4N1O1afk2j4MMawcDFuNFfZdMm-_a_N88AxdzfZHhVKBcXG6HmlL7zIH3Y/exec";
     
     let ingresos = obtenerIngresos();
     let salidas = obtenerSalidas();
@@ -407,23 +407,27 @@ function sincronizarGoogleSheets() {
         return;
     }
 
-    // Sincronizar Ingresos
-    ingresos.forEach(i => {
-        let query = `?tipo=ingreso&id=${i.id}&fecha=${i.fecha}&quinta=${encodeURIComponent(i.quinta)}&lote=${i.lote}&cuadrilla=${i.cuadrilla}&variedad=${encodeURIComponent(i.variedad)}&tractoristas=${i.tractoristas}&binesBuenos=${i.binesBuenos}&ubicacion=${encodeURIComponent(i.ubicacion)}&destino=${encodeURIComponent(i.destino)}&binesInd=${i.binesInd}`;
-        fetch(urlWebapp + query);
-    });
+    // Método infalible con formulario oculto para saltar restricciones de CORS
+    function enviarDatos(tipo, info) {
+        let form = document.createElement('form');
+        form.method = 'POST';
+        form.action = urlWebapp;
+        form.target = '_blank'; // Abre una micro pestaña invisible o se ejecuta en segundo plano
 
-    // Sincronizar Salidas
-    salidas.forEach(s => {
-        let query = `?tipo=salida&loteId=${s.loteId}&fecha=${s.fecha}&tipoSalida=${encodeURIComponent(s.tipo)}&idVolcado=${s.idVolcado}&descVolcado=${encodeURIComponent(s.descVolcado)}&cantidad=${s.cantidad}&quinta=${encodeURIComponent(s.quinta)}&lote=${s.lote}&variedad=${encodeURIComponent(s.variedad)}`;
-        fetch(urlWebapp + query);
-    });
+        let input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'data';
+        input.value = JSON.stringify({ tipo: tipo, info: info });
+        
+        form.appendChild(input);
+        document.body.appendChild(form);
+        form.submit();
+        document.body.removeChild(form);
+    }
 
-    // Sincronizar Movimientos
-    movimientos.forEach(m => {
-        let query = `?tipo=movimiento&tipoMov=${m.tipo}&loteId=${m.loteId}&fecha=${m.fecha}&cantidad=${m.cantidad}&destinoEmpaque=${encodeURIComponent(m.destinoEmpaque)}&lote=${m.lote}&quinta=${encodeURIComponent(m.quinta)}&variedad=${encodeURIComponent(m.variedad)}`;
-        fetch(urlWebapp + query);
-    });
+    ingresos.forEach(i => enviarDatos("ingreso", i));
+    salidas.forEach(s => enviarDatos("salida", s));
+    movimientos.forEach(m => enviarDatos("movimiento", m));
 
     alert('¡Sincronización enviada a Google Sheets con éxito!');
 }
