@@ -396,7 +396,7 @@ function poblarSelectLotes(selectId, modo = 'stock') {
 }
 
 function sincronizarGoogleSheets() {
-    const urlWebapp = "https://script.google.com/macros/s/AKfycbxKhCoVSJ380K3ZdS2YrTH06APFQ0A54zpa9WLax5BYpSiRYh9PGZ7NrLm--KBm7f4/exec";
+    const urlWebapp = "https://script.google.com/macros/s/AKfycbyDZsIye6CKu0JoicXdr6xYT_ZAr8kvtdcxmciKBnEmAeHSDGl6dO9ZkcN3y8IdHZo2/exec";
     
     let ingresos = obtenerIngresos();
     let salidas = obtenerSalidas();
@@ -407,23 +407,25 @@ function sincronizarGoogleSheets() {
         return;
     }
 
-    let payload = {
-        ingresos: ingresos,
-        salidas: salidas,
-        movimientos: movimientos
-    };
-
-    fetch(urlWebapp, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        alert('¡Sincronizado con Google Sheets con éxito!');
-    })
-    .catch(err => {
-        alert('Error al sincronizar: ' + err);
+    // Sincronizar Ingresos
+    ingresos.forEach(i => {
+        let query = `?tipo=ingreso&id=${i.id}&fecha=${i.fecha}&quinta=${encodeURIComponent(i.quinta)}&lote=${i.lote}&cuadrilla=${i.cuadrilla}&variedad=${encodeURIComponent(i.variedad)}&tractoristas=${i.tractoristas}&binesBuenos=${i.binesBuenos}&ubicacion=${encodeURIComponent(i.ubicacion)}&destino=${encodeURIComponent(i.destino)}&binesInd=${i.binesInd}`;
+        fetch(urlWebapp + query);
     });
+
+    // Sincronizar Salidas
+    salidas.forEach(s => {
+        let query = `?tipo=salida&loteId=${s.loteId}&fecha=${s.fecha}&tipoSalida=${encodeURIComponent(s.tipo)}&idVolcado=${s.idVolcado}&descVolcado=${encodeURIComponent(s.descVolcado)}&cantidad=${s.cantidad}&quinta=${encodeURIComponent(s.quinta)}&lote=${s.lote}&variedad=${encodeURIComponent(s.variedad)}`;
+        fetch(urlWebapp + query);
+    });
+
+    // Sincronizar Movimientos
+    movimientos.forEach(m => {
+        let query = `?tipo=movimiento&tipoMov=${m.tipo}&loteId=${m.loteId}&fecha=${m.fecha}&cantidad=${m.cantidad}&destinoEmpaque=${encodeURIComponent(m.destinoEmpaque)}&lote=${m.lote}&quinta=${encodeURIComponent(m.quinta)}&variedad=${encodeURIComponent(m.variedad)}`;
+        fetch(urlWebapp + query);
+    });
+
+    alert('¡Sincronización enviada a Google Sheets con éxito!');
 }
 
 renderStockPlaya();
