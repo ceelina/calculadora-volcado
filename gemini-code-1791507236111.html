@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>El Paruco - Control de Stock y Trazabilidad</title>
+<style>
+:root{--bg:#f8fafc;--card:#fff;--orange:#f37324;--green-dark:#2d5738;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--sheet:#107c41;--red:#dc2626;--blue:#0284c7}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:var(--bg);color:var(--text);display:flex;justify-content:center;padding:16px 12px 36px;min-height:100vh}
+.container{width:100%;max-width:520px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px 16px;box-shadow:0 10px 25px -5px rgba(45,87,56,.08)}
+.brand-header{text-align:center;margin-bottom:16px}
+h1{font-size:1.2rem;color:var(--green-dark)}.subtitle{font-size:.75rem;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+
+/* Pestañas de Navegación */
+.nav-tabs{display:flex;gap:4px;margin-bottom:16px;background:#f1f5f9;padding:4px;border-radius:12px;overflow-x:auto}
+.tab-btn{flex:1;padding:8px 6px;border:none;border-radius:8px;font-size:.7rem;font-weight:700;cursor:pointer;background:transparent;color:var(--muted);white-space:nowrap;transition:all .2s}
+.tab-btn.active{background:var(--card);color:var(--green-dark);box-shadow:0 2px 5px rgba(0,0,0,.05)}
+.view-section{display:none}
+.view-section.active{display:block}
+
+.section-title{font-size:.85rem;font-weight:700;color:var(--green-dark);margin:14px 0 8px;padding-bottom:4px;border-bottom:1.5px solid #edf2f7}
+.form-group{margin-bottom:10px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+label{display:block;font-size:.7rem;font-weight:600;color:var(--green-dark);margin-bottom:3px}
+input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:.8rem;outline:none}
+input:focus, select:focus{border-color:var(--orange)}
+
+.btn-action{margin-top:12px;width:100%;background:var(--green-dark);color:white;border:none;padding:12px;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer}
+.btn-sheet{margin-top:8px;width:100%;background:var(--sheet);color:white;border:none;padding:10px;border-radius:12px;font-size:.85rem;font-weight:700;cursor:pointer}
+
+.card-item{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;font-size:0.75rem}
+.card-item b{color:var(--green-dark)}
+.stock-badge{display:inline-block;padding:2px 6px;background:#e2e8f0;border-radius:4px;font-weight:bold;color:var(--green-dark)}
+.externo-badge{display:inline-block;padding:2px 6px;background:#e0f2fe;color:#0369a1;border-radius:4px;font-weight:bold;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="brand-header">
+<h1>Control de Stock y Trazabilidad</h1><div class="subtitle">El Paruco S.A.</div>
+</div>
+
+<!-- Pestañas -->
+<div class="nav-tabs">
+    <button type="button" class="tab-btn active" onclick="cambiarVista('stock', this)">📦 Stock Playa</button>
+    <button type="button" class="tab-btn" onclick="cambiarVista('ingresos', this)">📥 Ingresos</button>
+    <button type="button" class="tab-btn" onclick="cambiarVista('salidas', this)">📤 Salidas / Egresos</button>
+    <button type="button" class="tab-btn" onclick="cambiarVista('movimientos', this)">🚚 Envíos / Retornos</button>
+</div>
+
+<!-- ================= 0. STOCK ACTUAL EN PLAYA ================= -->
+<div id="viewStock" class="view-section active">
+    <div class="section-title">📊 Estado del Stock de Fruta en Playa</div>
+    <div style="font-size:0.7rem; color:var(--muted); margin-bottom:10px;">
+        Lotes vigentes, bines en playa y bines prestados/fuera de la planta en tiempo real.
+    </div>
+    <div id="tablaStockPlaya"></div>
+</div>
+
+<!-- ================= 1. INGRESOS ================= -->
+<div id="viewIngresos" class="view-section">
+    <div class="section-title">Registrar Ingreso de Fruta (Materia Prima)</div>
+    <div class="grid-2 form-group">
+        <div><label>Fecha Cosecha</label><input type="date" id="ingFecha"></div>
+        <div><label>Quinta</label><input type="text" id="ingQuinta" placeholder="Ej: La Curva"></div>
+    </div>
+    <div class="grid-3 form-group">
+        <div><label>Lote</label><input type="text" id="ingLote" placeholder="Ej: 5101"></div>
+        <div><label>Cuadrilla</label><input type="text" id="ingCuadrilla" placeholder="Ej: C-2"></div>
+        <div><label>Variedad</label><input type="text" id="ingVariedad" placeholder="Ej: Nova"></div>
+    </div>
+    <div class="grid-2 form-group">
+        <div><label>Cantidad Tractoristas</label><input type="number" id="ingTractoristas" value="1" min="0" placeholder="0"></div>
+        <div><label>Bines Buenos</label><input type="number" id="ingBinesBuenos" placeholder="0"></div>
+    </div>
+    <div class="grid-3 form-group">
+        <div><label>Ubicación</label><input type="text" id="ingUbicacion" placeholder="Playa / Cámara"></div>
+        <div><label>Destino Inicial</label>
+            <select id="ingDestino">
+                <option value="Exportación">Exportación</option>
+                <option value="Mercado Interno">Mercado Interno</option>
+                <option value="Frío">Frío</option>
+            </select>
+        </div>
+        <div><label>Bines Industria</label><input type="number" id="ingBinesInd" value="0"></div>
+    </div>
+    <button type="button" class="btn-action" onclick="guardarIngreso()">💾 Guardar Ingreso</button>
+</div>
+
+<!-- ================= 2. SALIDAS / EGRESOS ================= -->
+<div id="viewSalidas" class="view-section">
+    <div class="section-title">Registrar Salida Definitiva de Fruta</div>
+    <div class="form-group">
+        <label>Seleccionar Lote en Stock</label>
+        <select id="salLoteSelect" onchange="actualizarInfoLoteSalida()">
+            <option value="">-- Seleccione un lote disponible --</option>
+        </select>
+        <div id="infoLoteStock" style="font-size:0.7rem; color:var(--orange); margin-top:3px; font-weight:bold;"></div>
+    </div>
+    <div class="grid-2 form-group">
+        <div><label>Fecha</label><input type="date" id="salFecha"></div>
+        <div><label>Motivo de Salida</label>
+            <select id="salTipo" onchange="toggleDetalleVolcado()">
+                <optgroup label="Volcados en Línea">
+                    <option value="Volc. Exportación / Frío">Volcado Exportación / Frío</option>
+                    <option value="Volc. Mercado Interno">Volcado Mercado Interno</option>
+                </optgroup>
+                <optgroup label="Otras Salidas Definitivas">
+                    <option value="Industria">Industria</option>
+                    <option value="Vendido">Vendido</option>
+                    <option value="Otros">Otros</option>
+                </optgroup>
+            </select>
+        </div>
+    </div>
+    <div id="bloqueVolcado" class="grid-2 form-group">
+        <div><label>ID Registro Volcado</label><input type="text" id="salIdVolcado" placeholder="Ej: ID-001"></div>
+        <div><label>Descripción / Línea</label><input type="text" id="salDescVolcado" placeholder="Línea 1"></div>
+    </div>
+    <div class="grid-2 form-group">
+        <div><label>Cantidad a Egresar (Bines)</label><input type="number" id="salCantidad" placeholder="0"></div>
+    </div>
+    <button type="button" class="btn-action" onclick="guardarSalida()">💾 Registrar Salida Definitiva</button>
+</div>
+
+<!-- ================= 3. MOVIMIENTOS (ENVÍOS Y RETORNOS) ================= -->
+<div id="viewMovimientos" class="view-section">
+    <div class="section-title">Envío Externo (Fuera del empaque) o Retorno</div>
+    <div class="form-group">
+        <label>Tipo de Operación</label>
+        <select id="movTipo" onchange="actualizarModoMovimiento()">
+            <option value="envio">📤 Enviar a otro empaque / cámara externa</option>
+            <option value="retorno">📥 Retorno / Vuelve al empaque</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Seleccionar Lote</label>
+        <select id="movLoteSelect" onchange="actualizarInfoLoteMov()">
+            <option value="">-- Seleccione un lote --</option>
+        </select>
+        <div id="infoLoteMov" style="font-size:0.7rem; color:var(--orange); margin-top:3px; font-weight:bold;"></div>
+    </div>
+    <div class="grid-2 form-group">
+        <div><label>Fecha</label><input type="date" id="movFecha"></div>
+        <div><label>Cantidad de Bines</label><input type="number" id="movCantidad" placeholder="0"></div>
+    </div>
+    <div class="form-group" id="grupoDestinoEnvio">
+        <div><label>¿A dónde se envía?</label><input type="text" id="movDestinoEmpaque" placeholder="Ej: Empaque San Juan / Galpón B"></div>
+    </div>
+    <button type="button" class="btn-action" id="btnAccionMov" onclick="guardarMovimiento()">💾 Registrar Envío Externo</button>
+</div>
+
+<button type="button" class="btn-sheet" onclick="sincronizarGoogleSheets()">☁️ Sincronizar con Google Sheets</button>
+</div>
+
+<script>
+function cambiarVista(vista, btnElement) {
+    document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    
+    if(btnElement) btnElement.classList.add('active');
+
+    if(vista === 'stock') {
+        document.getElementById('viewStock').classList.add('active');
+        renderStockPlaya();
+    } else if(vista === 'ingresos') {
+        document.getElementById('viewIngresos').classList.add('active');
+    } else if(vista === 'salidas') {
+        document.getElementById('viewSalidas').classList.add('active');
+        poblarSelectLotes('salLoteSelect', 'stock');
+    } else if(vista === 'movimientos') {
+        document.getElementById('viewMovimientos').classList.add('active');
+        actualizarModoMovimiento();
+    }
+}
+
+const hoy = new Date().toISOString().split('T')[0];
+document.querySelectorAll('input[type="date"]').forEach(el => el.value = hoy);
+
+function obtenerIngresos() { return JSON.parse(localStorage.getItem('paruco_ingresos') || '[]'); }
+function obtenerSalidas() { return JSON.parse(localStorage.getItem('paruco_salidas') || '[]'); }
+function obtenerMovimientos() { return JSON.parse(localStorage.getItem('paruco_movimientos') || '[]'); }
+
+function guardarIngreso() {
+    const item = {
+        id: 'LOTE-' + Date.now().toString().slice(-4),
+        fecha: document.getElementById('ingFecha').value,
+        quinta: document.getElementById('ingQuinta').value,
+        lote: document.getElementById('ingLote').value,
+        cuadrilla: document.getElementById('ingCuadrilla').value,
+        variedad: document.getElementById('ingVariedad').value,
+        tractoristas: parseInt(document.getElementById('ingTractoristas').value) || 0,
+        binesBuenos: parseFloat(document.getElementById('ingBinesBuenos').value) || 0,
+        ubicacion: document.getElementById('ingUbicacion').value,
+        destino: document.getElementById('ingDestino').value,
+        binesInd: parseFloat(document.getElementById('ingBinesInd').value) || 0
+    };
+    if(!item.lote || !item.quinta) { alert('Complete al menos Quinta y Lote'); return; }
+    let lista = obtenerIngresos();
+    lista.unshift(item);
+    localStorage.setItem('paruco_ingresos', JSON.stringify(lista));
+    alert('¡Ingreso registrado con éxito!');
+    cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+}
+
+function toggleDetalleVolcado() {
+    let tipo = document.getElementById('salTipo').value;
+    let bloque = document.getElementById('bloqueVolcado');
+    if(tipo.includes('Volc.')) {
+        bloque.style.display = 'grid';
+    } else {
+        bloque.style.display = 'none';
+    }
+}
+
+function actualizarModoMovimiento() {
+    let tipo = document.getElementById('movTipo').value;
+    let grupoDestino = document.getElementById('grupoDestinoEnvio');
+    let btn = document.getElementById('btnAccionMov');
+    
+    if(tipo === 'envio') {
+        grupoDestino.style.display = 'block';
+        btn.textContent = '💾 Registrar Envío Externo (Descuenta stock)';
+        poblarSelectLotes('movLoteSelect', 'stock');
+    } else {
+        grupoDestino.style.display = 'none';
+        btn.textContent = '💾 Registrar Retorno (Suma al stock)';
+        poblarSelectLotes('movLoteSelect', 'externo');
+    }
+}
+
+function actualizarInfoLoteSalida() {
+    let loteId = document.getElementById('salLoteSelect').value;
+    if(!loteId) { document.getElementById('infoLoteStock').textContent = ''; return; }
+    let ing = obtenerIngresos().find(i => i.id === loteId);
+    let salidas = obtenerSalidas().filter(s => s.loteId === loteId).reduce((sum, s) => sum + s.cantidad, 0);
+    let envios = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'envio').reduce((sum, m) => sum + m.cantidad, 0);
+    let retornos = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'retorno').reduce((sum, m) => sum + m.cantidad, 0);
+    let stock = ing.binesBuenos - salidas - (envios - retornos);
+    document.getElementById('infoLoteStock').textContent = `Stock disponible: ${stock} bines (Variedad: ${ing.variedad})`;
+}
+
+function actualizarInfoLoteMov() {
+    let loteId = document.getElementById('movLoteSelect').value;
+    if(!loteId) { document.getElementById('infoLoteMov').textContent = ''; return; }
+    let ing = obtenerIngresos().find(i => i.id === loteId);
+    let salidas = obtenerSalidas().filter(s => s.loteId === loteId).reduce((sum, s) => sum + s.cantidad, 0);
+    let envios = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'envio').reduce((sum, m) => sum + m.cantidad, 0);
+    let retornos = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'retorno').reduce((sum, m) => sum + m.cantidad, 0);
+    let stock = ing.binesBuenos - salidas - (envios - retornos);
+    let fuera = envios - retornos;
+    let tipo = document.getElementById('movTipo').value;
+    document.getElementById('infoLoteMov').textContent = tipo === 'envio' ? `Stock disponible en planta: ${stock} bines` : `Bines fuera de planta: ${fuera} bines`;
+}
+
+function guardarSalida() {
+    const loteId = document.getElementById('salLoteSelect').value;
+    const cantidad = parseFloat(document.getElementById('salCantidad').value) || 0;
+
+    if(!loteId || cantidad <= 0) { alert('Seleccione un lote y cantidad válida'); return; }
+
+    let ing = obtenerIngresos().find(i => i.id === loteId);
+    let salidasPrevias = obtenerSalidas().filter(s => s.loteId === loteId).reduce((sum, s) => sum + s.cantidad, 0);
+    let envios = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'envio').reduce((sum, m) => sum + m.cantidad, 0);
+    let retornos = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'retorno').reduce((sum, m) => sum + m.cantidad, 0);
+    let stockActual = ing.binesBuenos - salidasPrevias - (envios - retornos);
+
+    if(cantidad > stockActual) {
+        alert(`Stock insuficiente. Disponible en este lote: ${stockActual} bines.`);
+        return;
+    }
+
+    const item = {
+        loteId: loteId,
+        fecha: document.getElementById('salFecha').value,
+        tipo: document.getElementById('salTipo').value,
+        idVolcado: document.getElementById('salIdVolcado').value || '',
+        descVolcado: document.getElementById('salDescVolcado').value || '',
+        cantidad: cantidad,
+        quinta: ing.quinta,
+        lote: ing.lote,
+        variedad: ing.variedad
+    };
+
+    let lista = obtenerSalidas();
+    lista.unshift(item);
+    localStorage.setItem('paruco_salidas', JSON.stringify(lista));
+    alert('¡Salida registrada y stock descontado con éxito!');
+    cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+}
+
+function guardarMovimiento() {
+    const tipoMov = document.getElementById('movTipo').value;
+    const loteId = document.getElementById('movLoteSelect').value;
+    const cantidad = parseFloat(document.getElementById('movCantidad').value) || 0;
+    const destinoEmpaque = document.getElementById('movDestinoEmpaque').value.trim();
+
+    if(!loteId || cantidad <= 0 || (tipoMov === 'envio' && !destinoEmpaque)) { 
+        alert('Complete todos los campos requeridos correctamente'); 
+        return; 
+    }
+
+    let ing = obtenerIngresos().find(i => i.id === loteId);
+    let salidasPrevias = obtenerSalidas().filter(s => s.loteId === loteId).reduce((sum, s) => sum + s.cantidad, 0);
+    let enviosTotales = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'envio').reduce((sum, m) => sum + m.cantidad, 0);
+    let retornosTotales = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'retorno').reduce((sum, m) => sum + m.cantidad, 0);
+    
+    let stockEnPlanta = ing.binesBuenos - salidasPrevias - (enviosTotales - retornosTotales);
+    let stockFuera = enviosTotales - retornosTotales;
+
+    if(tipoMov === 'envio' && cantidad > stockEnPlanta) {
+        alert(`No puede enviar más bines de los que hay en planta (${stockEnPlanta} bines).`);
+        return;
+    }
+
+    if(tipoMov === 'retorno' && cantidad > stockFuera) {
+        alert(`No pueden retornar más bines de los que están fuera (${stockFuera} bines).`);
+        return;
+    }
+
+    const item = {
+        tipo: tipoMov,
+        loteId: loteId,
+        fecha: document.getElementById('movFecha').value,
+        cantidad: cantidad,
+        destinoEmpaque: tipoMov === 'envio' ? destinoEmpaque : 'Retornado a Planta',
+        lote: ing.lote,
+        quinta: ing.quinta,
+        variedad: ing.variedad
+    };
+
+    let lista = obtenerMovimientos();
+    lista.unshift(item);
+    localStorage.setItem('paruco_movimientos', JSON.stringify(lista));
+    alert(tipoMov === 'envio' ? '¡Envío externo registrado!' : '¡Retorno registrado con éxito!');
+    cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+}
+
+function renderStockPlaya() {
+    let ingresos = obtenerIngresos();
+    let salidas = obtenerSalidas();
+    let movimientos = obtenerMovimientos();
+
+    if(ingresos.length === 0) {
+        document.getElementById('tablaStockPlaya').innerHTML = '<div style="font-size:0.75rem; color:var(--muted); text-align:center; padding:20px;">No hay lotes ingresados en playa.</div>';
+        return;
+    }
+
+    let html = '';
+    ingresos.forEach(ing => {
+        let salidasEsteLote = salidas.filter(s => s.loteId === ing.id).reduce((sum, s) => sum + s.cantidad, 0);
+        let enviosEsteLote = movimientos.filter(m => m.loteId === ing.id && m.tipo === 'envio').reduce((sum, m) => sum + m.cantidad, 0);
+        let retornosEsteLote = movimientos.filter(m => m.loteId === ing.id && m.tipo === 'retorno').reduce((sum, m) => sum + m.cantidad, 0);
+        
+        let binesFuera = enviosEsteLote - retornosEsteLote;
+        let stockRestante = ing.binesBuenos - salidasEsteLote - binesFuera;
+
+        html += `
+        <div class="card-item" style="border-left: 4px solid ${stockRestante > 0 ? 'var(--green-dark)' : 'var(--red)'}">
+            <b>Quinta:</b> ${ing.quinta} | <b>Lote:</b> ${ing.lote} | <b>Var:</b> ${ing.variedad}<br>
+            <b>Ingresados:</b> ${ing.binesBuenos} bines | <b>Salidas Definitivas:</b> ${salidasEsteLote} bines<br>
+            <b>Stock en Playa:</b> <span class="stock-badge">${stockRestante} bines</span>
+            ${binesFuera > 0 ? `<br><span class="externo-badge">🚚 Fuera de planta: ${binesFuera} bines</span>` : ''}
+        </div>`;
+    });
+    document.getElementById('tablaStockPlaya').innerHTML = html;
+}
+
+function poblarSelectLotes(selectId, modo = 'stock') {
+    let ingresos = obtenerIngresos();
+    let salidas = obtenerSalidas();
+    let movimientos = obtenerMovimientos();
+    let select = document.getElementById(selectId);
+    select.innerHTML = '<option value="">-- Seleccione un lote --</option>';
+
+    ingresos.forEach(ing => {
+        let salidasEsteLote = salidas.filter(s => s.loteId === ing.id).reduce((sum, s) => sum + s.cantidad, 0);
+        let enviosEsteLote = movimientos.filter(m => m.loteId === ing.id && m.tipo === 'envio').reduce((sum, m) => sum + m.cantidad, 0);
+        let retornosEsteLote = movimientos.filter(m => m.loteId === ing.id && m.tipo === 'retorno').reduce((sum, m) => sum + m.cantidad, 0);
+        
+        let stockEnPlanta = ing.binesBuenos - salidasEsteLote - (enviosEsteLote - retornosEsteLote);
+        let binesFuera = enviosEsteLote - retornosEsteLote;
+
+        if(modo === 'stock' && stockEnPlanta > 0) {
+            let opt = document.createElement('option');
+            opt.value = ing.id;
+            opt.textContent = `${ing.quinta} - Lote ${ing.lote} (${ing.variedad}) [Disponibles: ${stockEnPlanta}]`;
+            select.appendChild(opt);
+        } else if(modo === 'externo' && binesFuera > 0) {
+            let opt = document.createElement('option');
+            opt.value = ing.id;
+            opt.textContent = `${ing.quinta} - Lote ${ing.lote} (${ing.variedad}) [Fuera: ${binesFuera}]`;
+            select.appendChild(opt);
+        }
+    });
+}
+
+function sincronizarGoogleSheets() {
+    alert('Sincronización con Google Sheets lista para conectar con la API.');
+}
+
+renderStockPlaya();
+</script>
+</body>
+</html>
