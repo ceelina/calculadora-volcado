@@ -396,20 +396,23 @@ function poblarSelectLotes(selectId, modo = 'stock') {
 }
 
 function sincronizarGoogleSheets() {
-    const urlWebapp = "https://script.google.com/macros/s/AKfycbwS0uRA_oH_ZLi499j8xvIe4j_8UMcggM-kJURBDAb1smjvafMt9GW3SLRKxfnYwixq/exec";
+    const urlWebapp = "PEGAR_AQUI_LA_URL_DE_GOOGLE_APPS_SCRIPT"; // Reemplaza esto con tu URL de Google Apps Script
     
-    // Ejemplo para enviar los ingresos guardados
-    let ingresos = JSON.parse(localStorage.getItem('paruco_ingresos') || '[]');
-    if(ingresos.length === 0) {
-        alert('No hay datos nuevos para sincronizar.');
+    let ingresos = obtenerIngresos();
+    let salidas = obtenerSalidas();
+    let movimientos = obtenerMovimientos();
+
+    if(ingresos.length === 0 && salidas.length === 0) {
+        alert('No hay registros nuevos para sincronizar.');
         return;
     }
 
-    // Enviamos el último ingreso registrado como ejemplo
-    let ultimoIngreso = ingresos[0];
+    // Preparamos un paquete con todos los datos actuales
     let payload = {
-        tipo: "Ingresos",
-        valores: [ultimoIngreso.fecha, ultimoIngreso.quinta, ultimoIngreso.lote, ultimoIngreso.variedad, ultimoIngreso.binesBuenos, ultimoIngreso.destino]
+        tipo: "Stock_El_Paruco",
+        ingresos: ingresos,
+        salidas: salidas,
+        movimientos: movimientos
     };
 
     fetch(urlWebapp, {
@@ -417,6 +420,10 @@ function sincronizarGoogleSheets() {
         mode: "no-cors",
         body: JSON.stringify(payload)
     })
-    .then(() => alert('¡Sincronizado con Google Sheets con éxito!'))
-    .catch(err => alert('Error al sincronizar: ' + err));
+    .then(() => {
+        alert('¡Sincronización completada con Google Sheets!');
+    })
+    .catch(err => {
+        alert('Error al sincronizar: ' + err);
+    });
 }
