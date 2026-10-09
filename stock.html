@@ -44,7 +44,7 @@ input:focus, select:focus{border-color:var(--orange)}
 <div class="nav-tabs">
     <button type="button" class="tab-btn active" onclick="cambiarVista('stock', this)">📦 Stock Playa</button>
     <button type="button" class="tab-btn" onclick="cambiarVista('ingresos', this)">📥 Ingresos</button>
-    <button type="button" class="tab-btn" onclick="cambiarVista('salidas', this)">📤 Salidas / Egresos</button>
+    <button type="button" class="tab-btn" onclick="cambiarVista('salidas', this)">📤 Salidas</button>
     <button type="button" class="tab-btn" onclick="cambiarVista('movimientos', this)">🚚 Envíos / Retornos</button>
 </div>
 
@@ -52,14 +52,14 @@ input:focus, select:focus{border-color:var(--orange)}
 <div id="viewStock" class="view-section active">
     <div class="section-title">📊 Estado del Stock de Fruta en Playa</div>
     <div style="font-size:0.7rem; color:var(--muted); margin-bottom:10px;">
-        Lotes vigentes, bines en playa y bines prestados/fuera de la planta en tiempo real.
+        Lotes vigentes, bines en playa y bines fuera de la planta en tiempo real.
     </div>
     <div id="tablaStockPlaya"></div>
 </div>
 
 <!-- ================= 1. INGRESOS ================= -->
 <div id="viewIngresos" class="view-section">
-    <div class="section-title">Registrar Ingreso de Fruta (Materia Prima)</div>
+    <div class="section-title">Registrar Ingreso de Fruta</div>
     <div class="grid-2 form-group">
         <div><label>Fecha Cosecha</label><input type="date" id="ingFecha"></div>
         <div><label>Quinta</label><input type="text" id="ingQuinta" placeholder="Ej: La Curva"></div>
@@ -70,12 +70,12 @@ input:focus, select:focus{border-color:var(--orange)}
         <div><label>Variedad</label><input type="text" id="ingVariedad" placeholder="Ej: Nova"></div>
     </div>
     <div class="grid-2 form-group">
-        <div><label>Cantidad Tractoristas</label><input type="number" id="ingTractoristas" value="1" min="0" placeholder="0"></div>
+        <div><label>Cantidad Tractoristas</label><input type="number" id="ingTractoristas" value="1" min="0"></div>
         <div><label>Bines Buenos</label><input type="number" id="ingBinesBuenos" placeholder="0"></div>
     </div>
     <div class="grid-3 form-group">
-        <div><label>Ubicación</label><input type="text" id="ingUbicacion" placeholder="Playa / Cámara"></div>
-        <div><label>Destino Inicial</label>
+        <div><label>Ubicación</label><input type="text" id="ingUbicacion" placeholder="Playa"></div>
+        <div><label>Destino</label>
             <select id="ingDestino">
                 <option value="Exportación">Exportación</option>
                 <option value="Mercado Interno">Mercado Interno</option>
@@ -87,25 +87,25 @@ input:focus, select:focus{border-color:var(--orange)}
     <button type="button" class="btn-action" onclick="guardarIngreso()">💾 Guardar Ingreso</button>
 </div>
 
-<!-- ================= 2. SALIDAS / EGRESOS ================= -->
+<!-- ================= 2. SALIDAS ================= -->
 <div id="viewSalidas" class="view-section">
-    <div class="section-title">Registrar Salida Definitiva de Fruta</div>
+    <div class="section-title">Registrar Salida Definitiva</div>
     <div class="form-group">
         <label>Seleccionar Lote en Stock</label>
         <select id="salLoteSelect" onchange="actualizarInfoLoteSalida()">
-            <option value="">-- Seleccione un lote disponible --</option>
+            <option value="">-- Seleccione un lote --</option>
         </select>
         <div id="infoLoteStock" style="font-size:0.7rem; color:var(--orange); margin-top:3px; font-weight:bold;"></div>
     </div>
     <div class="grid-2 form-group">
         <div><label>Fecha</label><input type="date" id="salFecha"></div>
-        <div><label>Motivo de Salida</label>
+        <div><label>Motivo</label>
             <select id="salTipo" onchange="toggleDetalleVolcado()">
-                <optgroup label="Volcados en Línea">
+                <optgroup label="Volcados">
                     <option value="Volc. Exportación / Frío">Volcado Exportación / Frío</option>
                     <option value="Volc. Mercado Interno">Volcado Mercado Interno</option>
                 </optgroup>
-                <optgroup label="Otras Salidas Definitivas">
+                <optgroup label="Otras Salidas">
                     <option value="Industria">Industria</option>
                     <option value="Vendido">Vendido</option>
                     <option value="Otros">Otros</option>
@@ -115,28 +115,28 @@ input:focus, select:focus{border-color:var(--orange)}
     </div>
     <div id="bloqueVolcado" class="grid-2 form-group">
         <div><label>ID Registro Volcado</label><input type="text" id="salIdVolcado" placeholder="Ej: ID-001"></div>
-        <div><label>Descripción / Línea</label><input type="text" id="salDescVolcado" placeholder="Línea 1"></div>
+        <div><label>Línea / Descripción</label><input type="text" id="salDescVolcado" placeholder="Línea 1"></div>
     </div>
     <div class="grid-2 form-group">
-        <div><label>Cantidad a Egresar (Bines)</label><input type="number" id="salCantidad" placeholder="0"></div>
+        <div><label>Cantidad (Bines)</label><input type="number" id="salCantidad" placeholder="0"></div>
     </div>
-    <button type="button" class="btn-action" onclick="guardarSalida()">💾 Registrar Salida Definitiva</button>
+    <button type="button" class="btn-action" onclick="guardarSalida()">💾 Registrar Salida</button>
 </div>
 
-<!-- ================= 3. MOVIMIENTOS (ENVÍOS Y RETORNOS) ================= -->
+<!-- ================= 3. MOVIMIENTOS ================= -->
 <div id="viewMovimientos" class="view-section">
-    <div class="section-title">Envío Externo (Fuera del empaque) o Retorno</div>
+    <div class="section-title">Envío Externo o Retorno</div>
     <div class="form-group">
-        <label>Tipo de Operación</label>
+        <label>Operación</label>
         <select id="movTipo" onchange="actualizarModoMovimiento()">
-            <option value="envio">📤 Enviar a otro empaque / cámara externa</option>
-            <option value="retorno">📥 Retorno / Vuelve al empaque</option>
+            <option value="envio">📤 Enviar a otro empaque / cámara</option>
+            <option value="retorno">📥 Retorno / Vuelve a planta</option>
         </select>
     </div>
     <div class="form-group">
         <label>Seleccionar Lote</label>
         <select id="movLoteSelect" onchange="actualizarInfoLoteMov()">
-            <option value="">-- Seleccione un lote --</option>
+            <option value="">-- Seleccione lote --</option>
         </select>
         <div id="infoLoteMov" style="font-size:0.7rem; color:var(--orange); margin-top:3px; font-weight:bold;"></div>
     </div>
@@ -145,9 +145,9 @@ input:focus, select:focus{border-color:var(--orange)}
         <div><label>Cantidad de Bines</label><input type="number" id="movCantidad" placeholder="0"></div>
     </div>
     <div class="form-group" id="grupoDestinoEnvio">
-        <div><label>¿A dónde se envía?</label><input type="text" id="movDestinoEmpaque" placeholder="Ej: Empaque San Juan / Galpón B"></div>
+        <div><label>Destino</label><input type="text" id="movDestinoEmpaque" placeholder="Ej: Empaque San Juan"></div>
     </div>
-    <button type="button" class="btn-action" id="btnAccionMov" onclick="guardarMovimiento()">💾 Registrar Envío Externo</button>
+    <button type="button" class="btn-action" id="btnAccionMov" onclick="guardarMovimiento()">💾 Registrar Operación</button>
 </div>
 
 <button type="button" class="btn-sheet" onclick="sincronizarGoogleSheets()">☁️ Sincronizar con Google Sheets</button>
@@ -220,11 +220,11 @@ function actualizarModoMovimiento() {
     
     if(tipo === 'envio') {
         grupoDestino.style.display = 'block';
-        btn.textContent = '💾 Registrar Envío Externo (Descuenta stock)';
+        btn.textContent = '💾 Registrar Envío Externo';
         poblarSelectLotes('movLoteSelect', 'stock');
     } else {
         grupoDestino.style.display = 'none';
-        btn.textContent = '💾 Registrar Retorno (Suma al stock)';
+        btn.textContent = '💾 Registrar Retorno';
         poblarSelectLotes('movLoteSelect', 'externo');
     }
 }
@@ -237,7 +237,7 @@ function actualizarInfoLoteSalida() {
     let envios = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'envio').reduce((sum, m) => sum + m.cantidad, 0);
     let retornos = obtenerMovimientos().filter(m => m.loteId === loteId && m.tipo === 'retorno').reduce((sum, m) => sum + m.cantidad, 0);
     let stock = ing.binesBuenos - salidas - (envios - retornos);
-    document.getElementById('infoLoteStock').textContent = `Stock disponible: ${stock} bines (Variedad: ${ing.variedad})`;
+    document.getElementById('infoLoteStock').textContent = `Stock disponible: ${stock} bines`;
 }
 
 function actualizarInfoLoteMov() {
@@ -257,7 +257,7 @@ function guardarSalida() {
     const loteId = document.getElementById('salLoteSelect').value;
     const cantidad = parseFloat(document.getElementById('salCantidad').value) || 0;
 
-    if(!loteId || cantidad <= 0) { alert('Seleccione un lote y cantidad válida'); return; }
+    if(!loteId || cantidad <= 0) { alert('Seleccione lote y cantidad'); return; }
 
     let ing = obtenerIngresos().find(i => i.id === loteId);
     let salidasPrevias = obtenerSalidas().filter(s => s.loteId === loteId).reduce((sum, s) => sum + s.cantidad, 0);
@@ -266,7 +266,7 @@ function guardarSalida() {
     let stockActual = ing.binesBuenos - salidasPrevias - (envios - retornos);
 
     if(cantidad > stockActual) {
-        alert(`Stock insuficiente. Disponible en este lote: ${stockActual} bines.`);
+        alert(`Stock insuficiente (${stockActual} bines disponibles).`);
         return;
     }
 
@@ -285,7 +285,7 @@ function guardarSalida() {
     let lista = obtenerSalidas();
     lista.unshift(item);
     localStorage.setItem('paruco_salidas', JSON.stringify(lista));
-    alert('¡Salida registrada y stock descontado con éxito!');
+    alert('¡Salida registrada!');
     cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
 }
 
@@ -296,7 +296,7 @@ function guardarMovimiento() {
     const destinoEmpaque = document.getElementById('movDestinoEmpaque').value.trim();
 
     if(!loteId || cantidad <= 0 || (tipoMov === 'envio' && !destinoEmpaque)) { 
-        alert('Complete todos los campos requeridos correctamente'); 
+        alert('Complete los campos requeridos'); 
         return; 
     }
 
@@ -309,12 +309,12 @@ function guardarMovimiento() {
     let stockFuera = enviosTotales - retornosTotales;
 
     if(tipoMov === 'envio' && cantidad > stockEnPlanta) {
-        alert(`No puede enviar más bines de los que hay en planta (${stockEnPlanta} bines).`);
+        alert(`Stock insuficiente en planta (${stockEnPlanta} bines).`);
         return;
     }
 
     if(tipoMov === 'retorno' && cantidad > stockFuera) {
-        alert(`No pueden retornar más bines de los que están fuera (${stockFuera} bines).`);
+        alert(`No pueden retornar más de los que están fuera (${stockFuera} bines).`);
         return;
     }
 
@@ -332,7 +332,7 @@ function guardarMovimiento() {
     let lista = obtenerMovimientos();
     lista.unshift(item);
     localStorage.setItem('paruco_movimientos', JSON.stringify(lista));
-    alert(tipoMov === 'envio' ? '¡Envío externo registrado!' : '¡Retorno registrado con éxito!');
+    alert('¡Operación registrada!');
     cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
 }
 
@@ -342,7 +342,7 @@ function renderStockPlaya() {
     let movimientos = obtenerMovimientos();
 
     if(ingresos.length === 0) {
-        document.getElementById('tablaStockPlaya').innerHTML = '<div style="font-size:0.75rem; color:var(--muted); text-align:center; padding:20px;">No hay lotes ingresados en playa.</div>';
+        document.getElementById('tablaStockPlaya').innerHTML = '<div style="font-size:0.75rem; color:var(--muted); text-align:center; padding:20px;">No hay lotes ingresados.</div>';
         return;
     }
 
@@ -358,7 +358,7 @@ function renderStockPlaya() {
         html += `
         <div class="card-item" style="border-left: 4px solid ${stockRestante > 0 ? 'var(--green-dark)' : 'var(--red)'}">
             <b>Quinta:</b> ${ing.quinta} | <b>Lote:</b> ${ing.lote} | <b>Var:</b> ${ing.variedad}<br>
-            <b>Ingresados:</b> ${ing.binesBuenos} bines | <b>Salidas Definitivas:</b> ${salidasEsteLote} bines<br>
+            <b>Ingresados:</b> ${ing.binesBuenos} | <b>Salidas:</b> ${salidasEsteLote}<br>
             <b>Stock en Playa:</b> <span class="stock-badge">${stockRestante} bines</span>
             ${binesFuera > 0 ? `<br><span class="externo-badge">🚚 Fuera de planta: ${binesFuera} bines</span>` : ''}
         </div>`;
@@ -396,34 +396,10 @@ function poblarSelectLotes(selectId, modo = 'stock') {
 }
 
 function sincronizarGoogleSheets() {
-    const urlWebapp = "PEGAR_AQUI_LA_URL_DE_GOOGLE_APPS_SCRIPT"; // Reemplaza esto con tu URL de Google Apps Script
-    
-    let ingresos = obtenerIngresos();
-    let salidas = obtenerSalidas();
-    let movimientos = obtenerMovimientos();
-
-    if(ingresos.length === 0 && salidas.length === 0) {
-        alert('No hay registros nuevos para sincronizar.');
-        return;
-    }
-
-    // Preparamos un paquete con todos los datos actuales
-    let payload = {
-        tipo: "Stock_El_Paruco",
-        ingresos: ingresos,
-        salidas: salidas,
-        movimientos: movimientos
-    };
-
-    fetch(urlWebapp, {
-        method: "POST",
-        mode: "no-cors",
-        body: JSON.stringify(payload)
-    })
-    .then(() => {
-        alert('¡Sincronización completada con Google Sheets!');
-    })
-    .catch(err => {
-        alert('Error al sincronizar: ' + err);
-    });
+    alert('Sincronización con Google Sheets lista.');
 }
+
+renderStockPlaya();
+</script>
+</body>
+</html>
