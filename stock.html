@@ -157,7 +157,7 @@ input:focus, select:focus{border-color:var(--orange)}
 </div>
 
 <script>
-const URL_WEBAPP = "https://script.google.com/macros/s/AKfycbyDZsIye6CKu0JoicXdr6xYT_ZAr8kvtdcxmciKBnEmAeHSDGl6dO9ZkcN3y8IdHZo2/exec";
+const URL_WEBAPP = "https://script.google.com/macros/s/AKfycbyUUZdXcLQ1h7KBRSTqLjrDVz66waQsQLjV8lk7SudCBySvEYBJIHOnbS1eSmhgUWY0/exec";
 
 function cambiarVista(vista, btnElement) {
     document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -186,7 +186,6 @@ function obtenerIngresos() { return JSON.parse(localStorage.getItem('paruco_ingr
 function obtenerSalidas() { return JSON.parse(localStorage.getItem('paruco_salidas') || '[]'); }
 function obtenerMovimientos() { return JSON.parse(localStorage.getItem('paruco_movimientos') || '[]'); }
 
-// Al iniciar la página, intentamos descargar los datos actualizados de Google Sheets
 window.addEventListener('DOMContentLoaded', () => {
     cargarDatosDesdeNube();
 });
@@ -208,7 +207,6 @@ function cargarDatosDesdeNube() {
     })
     .catch(err => {
         indicador.style.display = 'none';
-        // Si falla la red, usamos lo que tenga guardado localmente
         renderStockPlaya();
     });
 }
