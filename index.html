@@ -39,10 +39,34 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </style>
 </head>
 <body>
+
+<!-- PANTALLA DE LOGIN / SUSCRIPCIÓN -->
+<div id="authOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(30,41,59,0.96); z-index:9999; display:flex; justify-content:center; align-items:center; padding:20px;">
+    <div style="background:var(--card); width:100%; max-width:380px; padding:24px; border-radius:16px; text-align:center; box-shadow:0 20px 25px -5px rgba(0,0,0,0.3);">
+        <h2 style="color:var(--green-dark); margin-bottom:8px; font-size:1.3rem;">Acceso Suscriptores</h2>
+        <p style="font-size:0.8rem; color:var(--muted); margin-bottom:20px;">Iniciá sesión con tu cuenta de cliente de El Paruco.</p>
+        
+        <input type="email" id="loginEmail" placeholder="Correo electrónico" style="margin-bottom:10px; text-align:left;">
+        <input type="password" id="loginPassword" placeholder="Contraseña" style="margin-bottom:16px; text-align:left;">
+        
+        <button type="button" id="btnLogin" style="width:100%; background:var(--orange); color:white; border:none; padding:12px; border-radius:10px; font-weight:700; cursor:pointer; margin-bottom:10px;">Ingresar</button>
+        <button type="button" id="btnLogout" style="width:100%; background:#f1f5f9; color:#dc2626; border:1px solid var(--border); padding:8px; border-radius:10px; font-weight:700; cursor:pointer; display:none; margin-top:10px;">Cerrar Sesión</button>
+
+        <p id="authErrorMsg" style="color:#dc2626; font-size:0.75rem; margin-top:10px; display:none;"></p>
+        
+        <div style="margin-top:20px; font-size:0.7rem; color:var(--muted);">
+            ¿Problemas con tu suscripción? <a href="https://wa.me/" target="_blank" style="color:var(--orange); text-decoration:none; font-weight:bold;">Contactar soporte</a>
+        </div>
+    </div>
+</div>
+
 <div class="container">
-<div class="brand-header">
-<img src="logo.jpg" alt="Logo El Paruco" class="brand-logo" onerror="this.style.display='none'">
-<h1>Control de Volcado e Insumos</h1><div class="subtitle">El Paruco</div>
+<div class="brand-header" style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="text-align:left;">
+        <h1 style="font-size:1.1rem;">Control de Volcado</h1>
+        <div class="subtitle">El Paruco</div>
+    </div>
+    <button type="button" id="btnTriggerLogout" style="background:#fee2e2; color:#dc2626; border:none; padding:6px 10px; border-radius:8px; font-size:0.7rem; font-weight:700; cursor:pointer;">Salir</button>
 </div>
 
 <div class="section-title">🎯 Velocidad y Turno</div>
@@ -202,7 +226,94 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 <button type="button" class="btn-clear" id="btnClear">🗑️ Limpiar campos / Nuevo Lote</button>
 </div>
 
+<!-- SCRIPTS DE FIREBASE Y LÓGICA -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// TUS CREDENCIALES EXACTAS DE FIREBASE YA CONFIGURADAS AQUÍ:
+const firebaseConfig = {
+  apiKey: "AIzaSyC7A7wiahJy4Dtf_9IP8cnSjTaJYMj544E",
+  authDomain: "calculadora-volcado.firebaseapp.com",
+  projectId: "calculadora-volcado",
+  storageBucket: "calculadora-volcado.firebasestorage.app",
+  messagingSenderId: "223759590148",
+  appId: "1:223759590148:web:9d7f40176f06c899a96651"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ELEMENTOS DE AUTH
+const authOverlay = document.getElementById('authOverlay');
+const loginEmail = document.getElementById('loginEmail');
+const loginPassword = document.getElementById('loginPassword');
+const btnLogin = document.getElementById('btnLogin');
+const btnLogout = document.getElementById('btnLogout');
+const btnTriggerLogout = document.getElementById('btnTriggerLogout');
+const authErrorMsg = document.getElementById('authErrorMsg');
+
+// VERIFICACIÓN DE SESIÓN Y SUSCRIPCIÓN ACTIVA
+onAuthStateChanged(auth, async (user) => {
+    if (user) {
+        try {
+            const userDocRef = doc(db, "usuarios", user.uid);
+            const userSnap = await getDoc(userDocRef);
+
+            if (userSnap.exists() && userSnap.data().activo === true) {
+                authOverlay.style.display = 'none';
+            } else {
+                authErrorMsg.textContent = "Tu suscripción ha vencido o el acceso está desactivado.";
+                authErrorMsg.style.display = 'block';
+                await signOut(auth);
+                authOverlay.style.display = 'flex';
+            }
+        } catch (error) {
+            console.error("Error verificando suscripción:", error);
+            authErrorMsg.textContent = "Error de conexión con el servidor.";
+            authErrorMsg.style.display = 'block';
+        }
+    } else {
+        authOverlay.style.display = 'flex';
+    }
+});
+
+// ACCIÓN DE LOGIN
+btnLogin.addEventListener('click', async () => {
+    authErrorMsg.style.display = 'none';
+    const email = loginEmail.value.trim();
+    const pass = loginPassword.value.trim();
+
+    if (!email || !pass) {
+        authErrorMsg.textContent = "Completá todos los campos.";
+        authErrorMsg.style.display = 'block';
+        return;
+    }
+
+    try {
+        await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+        authErrorMsg.textContent = "Credenciales incorrectas o usuario no encontrado.";
+        authErrorMsg.style.display = 'block';
+    }
+});
+
+// ACCIÓN DE LOGOUT
+const cerrarSesion = () => {
+    signOut(auth).then(() => {
+        loginEmail.value = '';
+        loginPassword.value = '';
+        authOverlay.style.display = 'flex';
+    });
+};
+btnLogout.addEventListener('click', cerrarSesion);
+btnTriggerLogout.addEventListener('click', cerrarSesion);
+</script>
+
 <script>
+// --- LÓGICA DE LA CALCULADORA ---
 const ritmoObjetivo = document.getElementById('ritmoObjetivo');
 const pesoBin = document.getElementById('pesoBin');
 const horaIni = document.getElementById('horaIni');
@@ -283,7 +394,6 @@ function addLoteRow(quinta = '', lote = '', variedad = '', bines = '', fecha = '
 function addSalidaRow(desc = '', calidad = '1ª', pallets = '', envPallet = '', sueltos = '', aRestar = '', kg = '15') {
     const row = document.createElement('div');
     row.className = 'tabla-row';
-    row.style.gridTemplateColumns = '0.9fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 32px';
     row.innerHTML = `
         <input type="text" class="sal-desc" value="${desc}" placeholder="Descripción">
         <select class="sal-calidad">
@@ -373,30 +483,18 @@ function calcular() {
         minsDesdeInicio = Math.max(0, (ha * 60 + ma) - (h1 * 60 + m1));
     }
 
-    // Estados de los tildes
     const isLimpiezaPasada = limpiezaPasada.checked;
     const isDescansoPasado = descansoPasado.checked;
 
-    const currentLimpiezaEfectiva = isLimpiezaPasada ? valLimpieza : 0;
-    const currentDescansoEfectivo = isDescansoPasado ? valDescanso : 0;
-
-    // 1. Horas efectivas totales del turno (para el balance y objetivo total)
-    // Si la limpieza o el descanso NO pasaron, se deben restar del tiempo total del turno porque ocurrirán o restan tiempo útil.
-    const turnoLimpiezaRestar = isLimpiezaPasada ? valLimpieza : valLimpieza; // el turno completo contempla la limpieza y descanso planeados
-    const turnoDescansoRestar = valDescanso;
     const totalDescuentosTurno = valLimpieza + valDescanso + totalPausasExtra;
     const minsEfectivos = Math.max(0, totalMinsTurno - totalDescuentosTurno);
     const horasEfectivas = minsEfectivos / 60;
     const binesIdealesTurno = horasEfectivas * objetivo;
 
-    // 2. Tiempo Bruto transcurrido hasta la hora actual:
-    // Descuenta únicamente el descanso si ya pasó (isDescansoPasado)
     const descBrutoAplicado = isDescansoPasado ? valDescanso : 0;
     const minsBrutoTranscurridos = Math.max(0, minsDesdeInicio - descBrutoAplicado);
     const horasBruto = minsBrutoTranscurridos / 60;
 
-    // 3. Tiempo Neto transcurrido hasta la hora actual:
-    // Descuenta el descanso (si pasó), la limpieza (si pasó) y las pausas extra
     const descNetoAplicado = (isDescansoPasado ? valDescanso : 0) + (isLimpiezaPasada ? valLimpieza : 0);
     const minsNetoTranscurridos = Math.max(0, minsDesdeInicio - descNetoAplicado - totalPausasExtra);
     const horasNeto = minsNetoTranscurridos / 60;
@@ -408,7 +506,6 @@ function calcular() {
 
     const binesVolcados = parseFloat(binesVolcadosInput.value) || 0;
 
-    // Ritmo Bruto
     let ritmoBrutoVal = 0;
     if (binesVolcados > 0 && horasBruto > 0) {
         ritmoBrutoVal = binesVolcados / horasBruto;
@@ -418,7 +515,6 @@ function calcular() {
     }
     tiempoBrutoSub.textContent = `Tiempo bruto: ${Math.floor(minsBrutoTranscurridos/60)}h ${minsBrutoTranscurridos%60}m`;
 
-    // Ritmo Neto
     let ritmoNetoVal = 0;
     if (binesVolcados > 0 && horasNeto > 0) {
         ritmoNetoVal = binesVolcados / horasNeto;
@@ -429,7 +525,6 @@ function calcular() {
     tiempoNetoSub.textContent = `Tiempo neto: ${Math.floor(minsNetoTranscurridos/60)}h ${minsNetoTranscurridos%60}m`;
     globalRitmoNetoTxt = ritmoNetoEstado.textContent;
 
-    // Balance Turno según opción elegida (Neto, Bruto u Objetivo)
     let binesProyectadosFin = 0;
     if (modoBalance.value === 'neto' && ritmoNetoVal > 0) {
         binesProyectadosFin = binesVolcados + (ritmoNetoVal * (minsEfectivos / 60 - horasNeto));
@@ -455,7 +550,6 @@ function calcular() {
 
     detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Proyectado: ${Math.round(binesProyectadosFin)} bines)`;
 
-    // Estimación hora fin de lote según opción elegida
     const binesRestantesPorVolcar = Math.max(0, totalBinesIngreso - binesVolcados);
     let velocidadParaEstimar = objetivo;
     if (modoEstimacion.value === 'neto' && ritmoNetoVal > 0) velocidadParaEstimar = ritmoNetoVal;
@@ -478,7 +572,6 @@ function calcular() {
         detalleFinEstimadoEl.textContent = `Ingrese bines en lotes y hora actual`;
     }
 
-    // Cálculo por calidad y producto
     let kg1 = 0, kg2 = 0, kgInd = 0;
     let descPorCalidad = { '1ª': {}, '2ª': {}, 'Industria': {} };
 
