@@ -32,6 +32,7 @@ input:focus, select:focus{border-color:var(--orange)}
 .card-item b{color:var(--green-dark)}
 .stock-badge{display:inline-block;padding:2px 6px;background:#e2e8f0;border-radius:4px;font-weight:bold;color:var(--green-dark)}
 .externo-badge{display:inline-block;padding:2px 6px;background:#e0f2fe;color:#0369a1;border-radius:4px;font-weight:bold;margin-top:4px}
+#loadingIndicator{text-align:center;font-size:0.75rem;color:var(--orange);margin-bottom:8px;font-weight:bold;display:none;}
 </style>
 </head>
 <body>
@@ -39,6 +40,8 @@ input:focus, select:focus{border-color:var(--orange)}
 <div class="brand-header">
 <h1>Control de Stock y Trazabilidad</h1><div class="subtitle">El Paruco S.A.</div>
 </div>
+
+<div id="loadingIndicator">🔄 Sincronizando datos con la nube...</div>
 
 <!-- Pestañas -->
 <div class="nav-tabs">
@@ -84,7 +87,7 @@ input:focus, select:focus{border-color:var(--orange)}
         </div>
         <div><label>Bines Industria</label><input type="number" id="ingBinesInd" value="0"></div>
     </div>
-    <button type="button" class="btn-action" onclick="guardarIngreso()">💾 Guardar Ingreso</button>
+    <button type="button" class="btn-action" onclick="guardarIngreso()">💾 Guardar y Enviar a la Nube</button>
 </div>
 
 <!-- ================= 2. SALIDAS ================= -->
@@ -150,10 +153,12 @@ input:focus, select:focus{border-color:var(--orange)}
     <button type="button" class="btn-action" id="btnAccionMov" onclick="guardarMovimiento()">💾 Registrar Operación</button>
 </div>
 
-<button type="button" class="btn-sheet" onclick="sincronizarGoogleSheets()">☁️ Sincronizar con Google Sheets</button>
+<button type="button" class="btn-sheet" onclick="cargarDatosDesdeNube()">🔄 Actualizar Datos desde la Nube</button>
 </div>
 
 <script>
+const URL_WEBAPP = "https://script.google.com/macros/s/AKfycbyDZsIye6CKu0JoicXdr6xYT_ZAr8kvtdcxmciKBnEmAeHSDGl6dO9ZkcN3y8IdHZo2/exec";
+
 function cambiarVista(vista, btnElement) {
     document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -181,6 +186,54 @@ function obtenerIngresos() { return JSON.parse(localStorage.getItem('paruco_ingr
 function obtenerSalidas() { return JSON.parse(localStorage.getItem('paruco_salidas') || '[]'); }
 function obtenerMovimientos() { return JSON.parse(localStorage.getItem('paruco_movimientos') || '[]'); }
 
+// Al iniciar la página, intentamos descargar los datos actualizados de Google Sheets
+window.addEventListener('DOMContentLoaded', () => {
+    cargarDatosDesdeNube();
+});
+
+function cargarDatosDesdeNube() {
+    let indicador = document.getElementById('loadingIndicator');
+    indicador.style.display = 'block';
+
+    fetch(URL_WEBAPP + "?accion=obtenerTodo")
+    .then(res => res.json())
+    .then(data => {
+        if(data && data.ingresos) {
+            localStorage.setItem('paruco_ingresos', JSON.stringify(data.ingresos));
+            localStorage.setItem('paruco_salidas', JSON.stringify(data.salidas || []));
+            localStorage.setItem('paruco_movimientos', JSON.stringify(data.movimientos || []));
+            renderStockPlaya();
+        }
+        indicador.style.display = 'none';
+    })
+    .catch(err => {
+        indicador.style.display = 'none';
+        // Si falla la red, usamos lo que tenga guardado localmente
+        renderStockPlaya();
+    });
+}
+
+function enviarANube(tipo, info, callback) {
+    let indicador = document.getElementById('loadingIndicator');
+    indicador.style.display = 'block';
+
+    fetch(URL_WEBAPP, {
+        method: "POST",
+        mode: "no-cors",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ tipo: tipo, info: info })
+    })
+    .then(() => {
+        indicador.style.display = 'none';
+        if(callback) callback();
+    })
+    .catch(err => {
+        indicador.style.display = 'none';
+        alert('Guardado localmente. Error al sincronizar con la nube: ' + err);
+        if(callback) callback();
+    });
+}
+
 function guardarIngreso() {
     const item = {
         id: 'LOTE-' + Date.now().toString().slice(-4),
@@ -196,11 +249,15 @@ function guardarIngreso() {
         binesInd: parseFloat(document.getElementById('ingBinesInd').value) || 0
     };
     if(!item.lote || !item.quinta) { alert('Complete al menos Quinta y Lote'); return; }
+    
     let lista = obtenerIngresos();
     lista.unshift(item);
     localStorage.setItem('paruco_ingresos', JSON.stringify(lista));
-    alert('¡Ingreso registrado con éxito!');
-    cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+
+    enviarANube("Ingresos", item, () => {
+        alert('¡Ingreso guardado y sincronizado!');
+        cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+    });
 }
 
 function toggleDetalleVolcado() {
@@ -285,8 +342,11 @@ function guardarSalida() {
     let lista = obtenerSalidas();
     lista.unshift(item);
     localStorage.setItem('paruco_salidas', JSON.stringify(lista));
-    alert('¡Salida registrada!');
-    cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+
+    enviarANube("Salidas", item, () => {
+        alert('¡Salida registrada y sincronizada!');
+        cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+    });
 }
 
 function guardarMovimiento() {
@@ -332,8 +392,11 @@ function guardarMovimiento() {
     let lista = obtenerMovimientos();
     lista.unshift(item);
     localStorage.setItem('paruco_movimientos', JSON.stringify(lista));
-    alert('¡Operación registrada!');
-    cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+
+    enviarANube("Movimientos", item, () => {
+        alert('¡Operación registrada y sincronizada!');
+        cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
+    });
 }
 
 function renderStockPlaya() {
@@ -342,7 +405,7 @@ function renderStockPlaya() {
     let movimientos = obtenerMovimientos();
 
     if(ingresos.length === 0) {
-        document.getElementById('tablaStockPlaya').innerHTML = '<div style="font-size:0.75rem; color:var(--muted); text-align:center; padding:20px;">No hay lotes ingresados.</div>';
+        document.getElementById('tablaStockPlaya').innerHTML = '<div style="font-size:0.75rem; color:var(--muted); text-align:center; padding:20px;">No hay lotes ingresados o sincronizados.</div>';
         return;
     }
 
@@ -393,34 +456,6 @@ function poblarSelectLotes(selectId, modo = 'stock') {
             select.appendChild(opt);
         }
     });
-}
-
-function sincronizarGoogleSheets() {
-    const urlWebapp = "https://script.google.com/macros/s/AKfycbxAUMysz8leggpmamDv-icLBD4n-ZLHaeZWoOeqWc7PvGV5FRQqBiXc6lC35JcafC5u/exec"; // <-- Tu URL de Apps Script va acá entre comillas
-    
-    let ingresos = obtenerIngresos();
-    let salidas = obtenerSalidas();
-    let movimientos = obtenerMovimientos();
-
-    if(ingresos.length === 0 && salidas.length === 0 && movimientos.length === 0) {
-        alert('No hay registros para sincronizar.');
-        return;
-    }
-
-    function enviar(tipoHoja, info) {
-        fetch(urlWebapp, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain" },
-            body: JSON.stringify({ tipo: tipoHoja, info: info })
-        });
-    }
-
-    ingresos.forEach(i => enviar("Ingresos", i));
-    salidas.forEach(s => enviar("Salidas", s));
-    movimientos.forEach(m => enviar("Movimientos", m));
-
-    alert('¡Sincronización enviada a Google Sheets!');
 }
 
 renderStockPlaya();
