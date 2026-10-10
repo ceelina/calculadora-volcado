@@ -65,18 +65,24 @@ input:focus, select:focus{border-color:var(--orange)}
     <div class="section-title">Registrar Ingreso de Fruta</div>
     <div class="grid-2 form-group">
         <div><label>Fecha Cosecha</label><input type="date" id="ingFecha"></div>
-        <div><label>Quinta</label><input type="text" id="ingQuinta" placeholder="Ej: La Curva"></div>
+        <div><label>Procedencia Bines</label>
+            <select id="ingProcedencia">
+                <option value="Quinta">Quinta</option>
+                <option value="Proceso">Proceso</option>
+            </select>
+        </div>
     </div>
     <div class="grid-3 form-group">
+        <div><label>Quinta</label><input type="text" id="ingQuinta" placeholder="Ej: La Curva"></div>
         <div><label>Lote</label><input type="text" id="ingLote" placeholder="Ej: 5101"></div>
-        <div><label>Cuadrilla</label><input type="text" id="ingCuadrilla" placeholder="Ej: C-2"></div>
         <div><label>Variedad</label><input type="text" id="ingVariedad" placeholder="Ej: Nova"></div>
     </div>
     <div class="grid-2 form-group">
+        <div><label>Cuadrilla</label><input type="text" id="ingCuadrilla" placeholder="Ej: C-2"></div>
         <div><label>Cantidad Tractoristas</label><input type="number" id="ingTractoristas" value="1" min="0"></div>
-        <div><label>Bines Buenos</label><input type="number" id="ingBinesBuenos" placeholder="0"></div>
     </div>
     <div class="grid-3 form-group">
+        <div><label>Bines Buenos</label><input type="number" id="ingBinesBuenos" placeholder="0"></div>
         <div><label>Ubicación</label><input type="text" id="ingUbicacion" placeholder="Playa"></div>
         <div><label>Destino</label>
             <select id="ingDestino">
@@ -85,6 +91,8 @@ input:focus, select:focus{border-color:var(--orange)}
                 <option value="Frío">Frío</option>
             </select>
         </div>
+    </div>
+    <div class="form-group">
         <div><label>Bines Industria</label><input type="number" id="ingBinesInd" value="0"></div>
     </div>
     <button type="button" class="btn-action" onclick="guardarIngreso()">💾 Guardar y Enviar a la Nube</button>
@@ -103,7 +111,7 @@ input:focus, select:focus{border-color:var(--orange)}
     <div class="grid-2 form-group">
         <div><label>Fecha</label><input type="date" id="salFecha"></div>
         <div><label>Motivo</label>
-            <select id="salTipo" onchange="toggleDetalleVolcado()">
+            <select id="salTipo">
                 <optgroup label="Volcados">
                     <option value="Volc. Exportación / Frío">Volcado Exportación / Frío</option>
                     <option value="Volc. Mercado Interno">Volcado Mercado Interno</option>
@@ -116,11 +124,7 @@ input:focus, select:focus{border-color:var(--orange)}
             </select>
         </div>
     </div>
-    <div id="bloqueVolcado" class="grid-2 form-group">
-        <div><label>ID Registro Volcado</label><input type="text" id="salIdVolcado" placeholder="Ej: ID-001"></div>
-        <div><label>Línea / Descripción</label><input type="text" id="salDescVolcado" placeholder="Línea 1"></div>
-    </div>
-    <div class="grid-2 form-group">
+    <div class="form-group">
         <div><label>Cantidad (Bines)</label><input type="number" id="salCantidad" placeholder="0"></div>
     </div>
     <button type="button" class="btn-action" onclick="guardarSalida()">💾 Registrar Salida</button>
@@ -236,10 +240,11 @@ function guardarIngreso() {
     const item = {
         id: 'LOTE-' + Date.now().toString().slice(-4),
         fecha: document.getElementById('ingFecha').value,
+        procedencia: document.getElementById('ingProcedencia').value,
         quinta: document.getElementById('ingQuinta').value,
         lote: document.getElementById('ingLote').value,
-        cuadrilla: document.getElementById('ingCuadrilla').value,
         variedad: document.getElementById('ingVariedad').value,
+        cuadrilla: document.getElementById('ingCuadrilla').value,
         tractoristas: parseInt(document.getElementById('ingTractoristas').value) || 0,
         binesBuenos: parseFloat(document.getElementById('ingBinesBuenos').value) || 0,
         ubicacion: document.getElementById('ingUbicacion').value,
@@ -256,16 +261,6 @@ function guardarIngreso() {
         alert('¡Ingreso guardado y sincronizado!');
         cambiarVista('stock', document.querySelectorAll('.tab-btn')[0]);
     });
-}
-
-function toggleDetalleVolcado() {
-    let tipo = document.getElementById('salTipo').value;
-    let bloque = document.getElementById('bloqueVolcado');
-    if(tipo.includes('Volc.')) {
-        bloque.style.display = 'grid';
-    } else {
-        bloque.style.display = 'none';
-    }
 }
 
 function actualizarModoMovimiento() {
@@ -329,8 +324,8 @@ function guardarSalida() {
         loteId: loteId,
         fecha: document.getElementById('salFecha').value,
         tipo: document.getElementById('salTipo').value,
-        idVolcado: document.getElementById('salIdVolcado').value || '',
-        descVolcado: document.getElementById('salDescVolcado').value || '',
+        idVolcado: '',
+        descVolcado: '',
         cantidad: cantidad,
         quinta: ing.quinta,
         lote: ing.lote,
@@ -418,7 +413,7 @@ function renderStockPlaya() {
 
         html += `
         <div class="card-item" style="border-left: 4px solid ${stockRestante > 0 ? 'var(--green-dark)' : 'var(--red)'}">
-            <b>Quinta:</b> ${ing.quinta} | <b>Lote:</b> ${ing.lote} | <b>Var:</b> ${ing.variedad}<br>
+            <b>Procedencia:</b> ${ing.procedencia || 'Quinta'} | <b>Quinta:</b> ${ing.quinta} | <b>Lote:</b> ${ing.lote} | <b>Var:</b> ${ing.variedad}<br>
             <b>Ingresados:</b> ${ing.binesBuenos} | <b>Salidas:</b> ${salidasEsteLote}<br>
             <b>Stock en Playa:</b> <span class="stock-badge">${stockRestante} bines</span>
             ${binesFuera > 0 ? `<br><span class="externo-badge">🚚 Fuera de planta: ${binesFuera} bines</span>` : ''}
