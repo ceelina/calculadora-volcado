@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>El Paruco - Control de Volcado e Insumos</title>
 <style>
-:root{--bg:#f8fafc;--card:#fff;--orange:#f37324;--green-dark:#2d5738;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--wsp:#25d366;--pdf:#0284c7;--sheet:#107c41}
+:root{--bg:#f8fafc;--card:#fff;--orange:#f37324;--green-dark:#2d5738;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--wsp:#25d366;--pdf:#0284c7;--sheet:#107c41;--red:#dc2626}
 *{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 body{background:var(--bg);color:var(--text);display:flex;justify-content:center;padding:16px 12px 36px;min-height:100vh}
 .container{width:100%;max-width:480px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px 16px;box-shadow:0 10px 25px -5px rgba(45,87,56,.08)}
@@ -30,6 +30,9 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 .btn-pdf{margin-top:8px;width:100%;background:var(--pdf);color:white;border:none;padding:12px;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer}
 .btn-sheet{margin-top:8px;width:100%;background:var(--sheet);color:white;border:none;padding:12px;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer}
 .btn-clear{margin-top:8px;width:100%;background:#f1f5f9;color:#64748b;border:1px solid var(--border);padding:10px;border-radius:12px;font-size:.8rem;font-weight:700;cursor:pointer}
+.historial-item{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px;margin-bottom:8px;font-size:0.75rem;display:flex;justify-content:space-between;align-items:center}
+.historial-info b{color:var(--green-dark)}
+.btn-del-hist{background:#fee2e2;color:var(--red);border:none;border-radius:6px;padding:6px 10px;font-size:0.7rem;font-weight:bold;cursor:pointer}
 #loadingLotes{font-size:0.7rem;color:var(--orange);font-weight:bold;margin-bottom:4px;display:none;}
 
 @media print {
@@ -205,6 +208,11 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </div>
 </div>
 
+<div class="section-title">📂 Historial de Reportes Guardados</div>
+<div id="historialContainer">
+    <div style="font-size:0.75rem; color:var(--muted); text-align:center; padding:10px;">No hay reportes guardados localmente.</div>
+</div>
+
 <button type="button" class="btn-wsp" id="btnWsp">📱 Compartir por WhatsApp</button>
 <button type="button" class="btn-pdf" id="btnPdf">📄 Exportar / Guardar PDF</button>
 <button type="button" class="btn-sheet" id="btnSheet">☁️ Guardar Reporte Completo en Excel</button>
@@ -212,7 +220,7 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 </div>
 
 <script>
-const URL_WEBAPP = "https://script.google.com/macros/s/AKfycbxuFInj9ElpNNPhVZ51Z3MjKkw88TniSa4KMQ5Y6jrYdxoQOTvjj59cDOK7jzhbXCME/exec";
+const URL_WEBAPP = "https://script.google.com/macros/s/AKfycbzAnPEK4hOmIZBu61730yiamGKeA9tWi-Z4njEpmdrgY2Ld6fvCEYiSb04EUq_tTxDz/exec";
 
 const ritmoObjetivo = document.getElementById('ritmoObjetivo');
 const pesoBin = document.getElementById('pesoBin');
@@ -247,6 +255,7 @@ const binesSalidaRowsContainer = document.getElementById('binesSalidaRows');
 const btnAddBinesSalida = document.getElementById('btnAddBinesSalida');
 const pausasRowsContainer = document.getElementById('pausasRows');
 const btnAddPausa = document.getElementById('btnAddPausa');
+const historialContainer = document.getElementById('historialContainer');
 
 const rendimientoDesglosadoEl = document.getElementById('rendimientoDesglosado');
 const baseEmpacablesEl = document.getElementById('baseEmpacables');
@@ -276,7 +285,6 @@ const btnHoraActual = document.getElementById('btnHoraActual');
 btnHoraActual.addEventListener('click', ponerHoraActual);
 ponerHoraActual();
 
-// Cargar únicamente lotes que tengan stock real disponible en Google Sheets
 function cargarLotesDisponibles() {
     loadingLotes.style.display = 'block';
     fetch(URL_WEBAPP + "?accion=obtenerTodo")
@@ -653,6 +661,41 @@ btnClear.addEventListener('click', () => {
     calcular();
 });
 
+// GESTIÓN DE HISTORIAL LOCAL
+function obtenerHistorialReportes() {
+    return JSON.parse(localStorage.getItem('paruco_historial_volcados') || '[]');
+}
+
+function renderHistorial() {
+    let historial = obtenerHistorialReportes();
+    if(historial.length === 0) {
+        historialContainer.innerHTML = '<div style="font-size:0.75rem; color:var(--muted); text-align:center; padding:10px;">No hay reportes guardados localmente.</div>';
+        return;
+    }
+
+    let html = '';
+    historial.forEach((rep, index) => {
+        html += `
+        <div class="historial-item">
+            <div class="historial-info">
+                <b>${rep.fecha} - ${rep.hora} hs</b><br>
+                Volcados: ${rep.binesVolcados} bines | Ritmo: ${rep.ritmoNeto}
+            </div>
+            <button type="button" class="btn-del-hist" onclick="borrarReporteHistorial(${index})">Eliminar</button>
+        </div>`;
+    });
+    historialContainer.innerHTML = html;
+}
+
+window.borrarReporteHistorial = function(index) {
+    if(confirm('¿Estás seguro de eliminar este reporte del historial?')) {
+        let historial = obtenerHistorialReportes();
+        historial.splice(index, 1);
+        localStorage.setItem('paruco_historial_volcados', JSON.stringify(historial));
+        renderHistorial();
+    }
+}
+
 btnWsp.addEventListener('click', () => {
     const textoWsp = `*🍊 El Paruco - Control de Volcado e Insumos*
 - Hora Actual: ${horaActual.value || '--:--'}
@@ -671,7 +714,6 @@ btnPdf.addEventListener('click', () => {
 });
 
 btnSheet.addEventListener('click', () => {
-    // Recolectar lotes cargados
     let lotesData = [];
     lotesRowsContainer.querySelectorAll('.lote-row').forEach(r => {
         lotesData.push({
@@ -684,7 +726,6 @@ btnSheet.addEventListener('click', () => {
         });
     });
 
-    // Recolectar salidas de envases
     let salidasData = [];
     salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
         salidasData.push({
@@ -698,7 +739,6 @@ btnSheet.addEventListener('click', () => {
         });
     });
 
-    // Recolectar bines de salida
     let binesSalidaData = [];
     binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
         binesSalidaData.push({
@@ -709,7 +749,6 @@ btnSheet.addEventListener('click', () => {
         });
     });
 
-    // Recolectar pausas
     let pausasData = [];
     pausasRowsContainer.querySelectorAll('.pausa-row').forEach(r => {
         pausasData.push({
@@ -739,6 +778,13 @@ btnSheet.addEventListener('click', () => {
         pausas: pausasData
     };
 
+    // Guardar en el historial local para visualizarlo en pantalla
+    let historial = obtenerHistorialReportes();
+    historial.unshift(reporteCompleto);
+    localStorage.setItem('paruco_historial_volcados', JSON.stringify(historial));
+    renderHistorial();
+
+    // Enviar a Google Sheets
     fetch(URL_WEBAPP, {
         method: "POST",
         mode: "no-cors",
@@ -746,14 +792,15 @@ btnSheet.addEventListener('click', () => {
         body: JSON.stringify({ tipo: "Volcados", info: reporteCompleto })
     })
     .then(() => {
-        alert('¡Reporte completo guardado en Google Sheets con éxito!');
+        alert('¡Reporte completo guardado en Google Sheets y en el historial local!');
     })
     .catch(err => {
-        alert('Error al guardar en la nube: ' + err);
+        alert('Guardado en historial local. Error al enviar a la nube: ' + err);
     });
 });
 
 cargarLotesDisponibles();
+renderHistorial();
 calcular();
 </script>
 </body>
