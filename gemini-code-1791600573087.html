@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>El Paruco - Control de Volcado e Insumos</title>
+<style>
+:root{--bg:#f8fafc;--card:#fff;--orange:#f37324;--green-dark:#2d5738;--text:#1e293b;--muted:#64748b;--border:#e2e8f0;--wsp:#25d366;--pdf:#0284c7}
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:var(--bg);color:var(--text);display:flex;justify-content:center;padding:16px 12px 36px;min-height:100vh}
+.container{width:100%;max-width:480px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:20px 16px;box-shadow:0 10px 25px -5px rgba(45,87,56,.08)}
+.brand-header{text-align:center;margin-bottom:16px}.brand-logo{width:75px;height:75px;object-fit:contain;border-radius:50%;margin-bottom:4px}
+h1{font-size:1.2rem;color:var(--green-dark)}.subtitle{font-size:.75rem;color:var(--orange);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.section-title{font-size:.85rem;font-weight:700;color:var(--green-dark);margin:18px 0 10px;padding-bottom:4px;border-bottom:1.5px solid #edf2f7}
+.form-group{margin-bottom:12px}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+label{display:block;font-size:.75rem;font-weight:600;color:var(--green-dark);margin-bottom:4px}
+input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(--border);border-radius:8px;color:var(--text);font-size:.8rem;outline:none}input:focus, select:focus{border-color:var(--orange)}
+.headers-lotes{display:grid;grid-template-columns:0.8fr 0.8fr 0.8fr 0.6fr 0.9fr 0.9fr 32px;gap:3px;font-size:.5rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
+.lote-row{display:grid;grid-template-columns:0.8fr 0.8fr 0.8fr 0.6fr 0.9fr 0.9fr 32px;gap:3px;align-items:center;margin-bottom:8px}
+.headers-tabla{display:grid;grid-template-columns:0.9fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 32px;gap:2px;font-size:.45rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
+.tabla-row{display:grid;grid-template-columns:0.9fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 32px;gap:2px;align-items:center;margin-bottom:8px}
+.headers-bines-salida{display:grid;grid-template-columns:1fr 0.8fr 0.8fr 1fr 32px;gap:3px;font-size:.55rem;font-weight:700;color:var(--muted);margin-bottom:6px;padding:0 2px;text-transform:uppercase}
+.bines-salida-row{display:grid;grid-template-columns:1fr 0.8fr 0.8fr 1fr 32px;gap:3px;align-items:center;margin-bottom:8px}
+.pausa-row{display:grid;grid-template-columns:1fr 1.2fr 32px;gap:6px;align-items:center;margin-bottom:8px}
+.btn-del-row{background:#fee2e2;color:#dc2626;border:none;border-radius:6px;width:32px;height:34px;font-size:1.1rem;font-weight:bold;cursor:pointer}
+.btn-add-row{background:#f1f5f9;color:var(--green-dark);border:1.5px dashed var(--border);border-radius:8px;padding:8px;font-size:.8rem;font-weight:700;cursor:pointer;width:100%;margin:4px 0 12px}
+.results{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px}.res-card{background:#fafaf9;border-radius:12px;padding:10px 8px;border:1px solid var(--border);text-align:center}.res-card.highlight{background:#f0fdf4;border-color:#bbf7d0}.full-width{grid-column:span 2}.target-box{background:#fff7ed;border-color:#fed7aa}
+.res-title{font-size:.7rem;color:var(--muted);text-transform:uppercase;margin-bottom:4px;font-weight:700}.res-value{font-size:1.25rem;font-weight:800;color:var(--green-dark)}.res-unit{font-size:.75rem;color:var(--muted);font-weight:500}.res-highlight{color:var(--orange)}.info-subtext{font-size:.7rem;color:var(--muted);margin-top:2px}
+.btn-wsp{margin-top:14px;width:100%;background:var(--wsp);color:white;border:none;padding:12px;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer}
+.btn-pdf{margin-top:8px;width:100%;background:var(--pdf);color:white;border:none;padding:12px;border-radius:12px;font-size:.9rem;font-weight:700;cursor:pointer}
+.btn-clear{margin-top:8px;width:100%;background:#f1f5f9;color:#64748b;border:1px solid var(--border);padding:10px;border-radius:12px;font-size:.8rem;font-weight:700;cursor:pointer}
+
+@media print {
+    body{background:#fff;padding:0}
+    .container{border:none;box-shadow:none;max-width:100%;padding:0}
+    button, .btn-add-row, .btn-del-row {display:none !important}
+    input, select{border:none;background:none;padding:0;font-size:.85rem;color:#000}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="brand-header">
+<img src="logo.jpg" alt="Logo El Paruco" class="brand-logo" onerror="this.style.display='none'">
+<h1>Control de Volcado e Insumos</h1><div class="subtitle">El Paruco</div>
+</div>
+
+<div class="section-title">🎯 Velocidad y Turno</div>
+<div class="grid-2 form-group">
+<div><label>Velocidad obj. (bines/h)</label><input type="number" id="ritmoObjetivo" value="30" min="1"></div>
+<div><label>Peso bin (kg)</label><input type="number" id="pesoBin" value="330"></div>
+</div>
+
+<div class="grid-3 form-group">
+<div><label>Hora Inicial</label><input type="time" id="horaIni" value="08:40"></div>
+<div><label>Hora Actual</label><div style="display:flex;gap:5px;align-items:center"><input type="time" id="horaActual" style="flex:1;min-width:0"><button type="button" id="btnHoraActual" title="Poner hora actual" aria-label="Poner hora actual" style="width:38px;height:35px;border:1.5px solid var(--border);border-radius:8px;background:#fff7ed;color:var(--orange);font-size:1.1rem;cursor:pointer">🕐</button></div></div>
+<div><label>Hora Final</label><input type="time" id="horaFin" value="14:00"></div>
+</div>
+
+<div class="grid-2 form-group">
+<div>
+    <label>Limpieza (min)</label>
+    <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="limpiezaMins" value="30" min="0" style="flex:1;">
+        <label style="font-size:0.65rem;margin:0;cursor:pointer;display:flex;align-items:center;gap:2px;"><input type="checkbox" id="limpiezaPasada"> ¿Pasó?</label>
+    </div>
+</div>
+<div>
+    <label>Descanso (min)</label>
+    <div style="display:flex;gap:6px;align-items:center;">
+        <input type="number" id="descansoPrinMins" value="30" min="0" style="flex:1;">
+        <label style="font-size:0.65rem;margin:0;cursor:pointer;display:flex;align-items:center;gap:2px;"><input type="checkbox" id="descansoPasado"> ¿Pasó?</label>
+    </div>
+</div>
+</div>
+
+<div class="form-group">
+<label>Retardo de línea (min) [Afecta solo al rendimiento]</label>
+<input type="number" id="retardoMins" value="10" min="0">
+</div>
+
+<div class="section-title">⏱️ Registro de Pausas Categorizadas</div>
+<div id="pausasRows"></div>
+<button type="button" class="btn-add-row" id="btnAddPausa">+ Agregar pausa / parada</button>
+
+<div class="section-title">🍇 Lotes de Quinta (Fruta en Bruto)</div>
+<div style="margin-bottom: 8px;">
+    <select id="selectorLotesStock" style="background:#f0fdf4; border-color:#86efac; color:var(--green-dark); font-weight:600;">
+        <option value="">🔗 O seleccionar de Stock de Playa existente...</option>
+    </select>
+</div>
+<div class="headers-lotes">
+<div>Quinta</div>
+<div>Lote</div>
+<div>Variedad</div>
+<div>Bines</div>
+<div>Cosecha</div>
+<div>Remito</div>
+<div></div>
+</div>
+<div id="lotesRows"></div>
+<button type="button" class="btn-add-row" id="btnAddLote">+ Agregar lote manual</button>
+
+<div class="form-group" style="margin-top:8px">
+<label>Bines volcados totales hasta esta hora</label><input type="number" id="binesVolcados" value="103" min="0" placeholder="Ej: 30">
+</div>
+
+<div class="results" style="margin-bottom:12px">
+<div class="res-card">
+<div class="res-title">Ritmo Bruto</div>
+<div class="res-value" id="ritmoBrutoEstado" style="font-size:1.1rem;">- bines/h</div>
+<div class="info-subtext" id="tiempoBrutoSub">Tiempo bruto: 0h 0m</div>
+</div>
+<div class="res-card">
+<div class="res-title">Ritmo Neto</div>
+<div class="res-value" id="ritmoNetoEstado" style="font-size:1.1rem;">- bines/h</div>
+<div class="info-subtext" id="tiempoNetoSub">Tiempo neto: 0h 0m</div>
+</div>
+<div class="res-card full-width">
+<div class="res-title" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>Balance Turno</span>
+    <select id="modoBalance" style="width:auto; font-size:0.65rem; padding:2px 4px;">
+        <option value="neto">Ritmo Neto</option>
+        <option value="bruto">Ritmo Bruto</option>
+        <option value="objetivo">Ritmo Objetivo</option>
+    </select>
+</div>
+<div class="res-value" id="balanceTurno">Sobra: 0 bines</div>
+<div class="info-subtext" id="detalleTurno">Tiempo efectivo total</div>
+</div>
+<div class="res-card full-width" style="background:#f0f9ff; border-color:#bae6fd;">
+<div class="res-title" style="display:flex; justify-content:space-between; align-items:center;">
+    <span>Fin estimado de lote</span>
+    <select id="modoEstimacion" style="width:auto; font-size:0.65rem; padding:2px 4px;">
+        <option value="neto">Ritmo Neto (Real)</option>
+        <option value="bruto">Ritmo Bruto</option>
+        <option value="objetivo">Ritmo Objetivo</option>
+    </select>
+</div>
+<div class="res-value" id="horaFinEstimada" style="color:#0369a1;">--:-- hs</div>
+<div class="info-subtext" id="detalleFinEstimado">Calculando tiempo restante...</div>
+</div>
+</div>
+
+<div class="section-title">📤 Salidas (Envases / Pallets)</div>
+<div class="headers-tabla">
+<div>Descripción</div>
+<div>Cal.</div>
+<div>Pallets</div>
+<div>Env/Pal</div>
+<div>Sueltos</div>
+<div>A Restar</div>
+<div>Kg/u</div>
+<div></div>
+</div>
+<div id="salidasRows"></div>
+<button type="button" class="btn-add-row" id="btnAddSalida">+ Agregar producto de salida</button>
+
+<div class="section-title">♻️ Bines de Salida</div>
+<div class="headers-bines-salida">
+<div>Descripción</div>
+<div>Cal.</div>
+<div>Bines</div>
+<div>Kg aprox.</div>
+<div></div>
+</div>
+<div id="binesSalidaRows"></div>
+<button type="button" class="btn-add-row" id="btnAddBinesSalida">+ Agregar bines de salida</button>
+
+<div class="results">
+<div class="res-card highlight full-width">
+<div class="res-title">Rendimiento por Calidad y Merma</div>
+<div class="res-value" id="rendimientoDesglosado" style="font-size:0.95rem; margin-top:2px;">1ª: 0.0% | 2ª: 0.0% | Ind: 0.0% | Merma: 0.0%</div>
+<div class="info-subtext" id="baseEmpacables">Base: 0 bines empacables</div>
+</div>
+<div class="res-card full-width">
+<div class="res-title">Detalle por Calidad y Producto</div>
+<div class="res-value" id="detallePorDesc" style="font-size:0.75rem; font-weight:normal; margin-top:4px; text-align:left; padding:0 4px; line-height: 1.4;">-</div>
+</div>
+</div>
+
+<div class="section-title">✏️ Consumo de Cera y Jabón (L/t)</div>
+<div class="grid-2 form-group">
+<div><label>Cera Inicial (L)</label><input type="number" id="ceraIni" placeholder="Ej: 100"></div>
+<div><label>Cera Final (L)</label><input type="number" id="ceraFin" placeholder="Ej: 90"></div>
+</div>
+<div class="grid-2 form-group">
+<div><label>Jabón Inicial (L)</label><input type="number" id="jabonIni" placeholder="Ej: 100"></div>
+<div><label>Jabón Final (L)</label><input type="number" id="jabonFin" placeholder="Ej: 90"></div>
+</div>
+
+<div class="results">
+<div class="res-card">
+<div class="res-title">Consumo Cera</div>
+<div class="res-value" id="consumoCera">0.00</div>
+<div class="res-unit">L/t</div>
+</div>
+<div class="res-card">
+<div class="res-title">Consumo Jabón</div>
+<div class="res-value" id="consumoJabon">0.00</div>
+<div class="res-unit">L/t</div>
+</div>
+</div>
+
+<button type="button" class="btn-wsp" id="btnWsp">📱 Compartir por WhatsApp</button>
+<button type="button" class="btn-pdf" id="btnPdf">📄 Exportar / Guardar PDF</button>
+<button type="button" class="btn-clear" id="btnClear">🗑️ Limpiar campos / Nuevo Lote</button>
+</div>
+
+<script>
+const ritmoObjetivo = document.getElementById('ritmoObjetivo');
+const pesoBin = document.getElementById('pesoBin');
+const horaIni = document.getElementById('horaIni');
+const horaActual = document.getElementById('horaActual');
+const horaFin = document.getElementById('horaFin');
+const limpiezaMins = document.getElementById('limpiezaMins');
+const limpiezaPasada = document.getElementById('limpiezaPasada');
+const descansoPrinMins = document.getElementById('descansoPrinMins');
+const descansoPasado = document.getElementById('descansoPasado');
+const retardoMins = document.getElementById('retardoMins');
+const modoBalance = document.getElementById('modoBalance');
+const modoEstimacion = document.getElementById('modoEstimacion');
+
+const lotesRowsContainer = document.getElementById('lotesRows');
+const btnAddLote = document.getElementById('btnAddLote');
+const selectorLotesStock = document.getElementById('selectorLotesStock');
+const binesVolcadosInput = document.getElementById('binesVolcados');
+const ritmoBrutoEstado = document.getElementById('ritmoBrutoEstado');
+const tiempoBrutoSub = document.getElementById('tiempoBrutoSub');
+const ritmoNetoEstado = document.getElementById('ritmoNetoEstado');
+const tiempoNetoSub = document.getElementById('tiempoNetoSub');
+const balanceTurnoEl = document.getElementById('balanceTurno');
+const detalleTurnoEl = document.getElementById('detalleTurno');
+const horaFinEstimadaEl = document.getElementById('horaFinEstimada');
+const detalleFinEstimadoEl = document.getElementById('detalleFinEstimado');
+
+const salidasRowsContainer = document.getElementById('salidasRows');
+const btnAddSalida = document.getElementById('btnAddSalida');
+const binesSalidaRowsContainer = document.getElementById('binesSalidaRows');
+const btnAddBinesSalida = document.getElementById('btnAddBinesSalida');
+const pausasRowsContainer = document.getElementById('pausasRows');
+const btnAddPausa = document.getElementById('btnAddPausa');
+
+const rendimientoDesglosadoEl = document.getElementById('rendimientoDesglosado');
+const baseEmpacablesEl = document.getElementById('baseEmpacables');
+const detallePorDescEl = document.getElementById('detallePorDesc');
+const ceraIni = document.getElementById('ceraIni');
+const ceraFin = document.getElementById('ceraFin');
+const jabonIni = document.getElementById('jabonIni');
+const jabonFin = document.getElementById('jabonFin');
+const consumoCeraEl = document.getElementById('consumoCera');
+const consumoJabonEl = document.getElementById('consumoJabon');
+const btnWsp = document.getElementById('btnWsp');
+const btnPdf = document.getElementById('btnPdf');
+const btnClear = document.getElementById('btnClear');
+
+let globalRendimientoTxt = "";
+let globalRitmoNetoTxt = "";
+
+function ponerHoraActual() {
+    const ahora = new Date();
+    const hh = String(ahora.getHours()).padStart(2, '0');
+    const mm = String(ahora.getMinutes()).padStart(2, '0');
+    horaActual.value = `${hh}:${mm}`;
+    calcular();
+}
+const btnHoraActual = document.getElementById('btnHoraActual');
+btnHoraActual.addEventListener('click', ponerHoraActual);
+ponerHoraActual();
+
+// Poblar selector con los lotes guardados en localStorage (de la app de stock)
+function cargarSelectorStock() {
+    const ingresos = JSON.parse(localStorage.getItem('paruco_ingresos') || '[]');
+    selectorLotesStock.innerHTML = '<option value="">🔗 O seleccionar de Stock de Playa existente...</option>';
+    ingresos.forEach(ing => {
+        let opt = document.createElement('option');
+        opt.value = ing.id;
+        opt.textContent = `Quinta: ${ing.quinta} | Lote: ${ing.lote} | Var: ${ing.variedad} (${ing.binesBuenos} bines)`;
+        opt.dataset.quinta = ing.quinta || '';
+        opt.dataset.lote = ing.lote || '';
+        opt.dataset.variedad = ing.variedad || '';
+        opt.dataset.bines = ing.binesBuenos || '';
+        opt.dataset.fecha = ing.fecha || '';
+        selectorLotesStock.appendChild(opt);
+    });
+}
+
+selectorLotesStock.addEventListener('change', (e) => {
+    const opt = selectorLotesStock.selectedOptions[0];
+    if(opt && opt.value) {
+        addLoteRow(opt.dataset.quinta, opt.dataset.lote, opt.dataset.variedad, opt.dataset.bines, opt.dataset.fecha, '');
+        selectorLotesStock.value = ''; // Resetea el selector
+    }
+});
+
+function addLoteRow(quinta = '', lote = '', variedad = '', bines = '', fecha = '', remito = '') {
+    const row = document.createElement('div');
+    row.className = 'lote-row';
+    row.innerHTML = `
+        <input type="text" class="lote-quinta" value="${quinta}" placeholder="Quinta">
+        <input type="text" class="lote-numero" value="${lote}" placeholder="Lote">
+        <input type="text" class="lote-variedad" value="${variedad}" placeholder="Variedad">
+        <input type="number" class="lote-bines" value="${bines}" placeholder="0">
+        <input type="date" class="lote-fecha" value="${fecha}">
+        <input type="text" class="lote-remito" value="${remito}" placeholder="Remito">
+        <button type="button" class="btn-del-row">×</button>
+    `;
+    row.querySelectorAll('input').forEach(el => el.addEventListener('input', calcular));
+    row.querySelector('.btn-del-row').addEventListener('click', () => { row.remove(); calcular(); });
+    lotesRowsContainer.appendChild(row);
+    calcular();
+}
+
+function addSalidaRow(desc = '', calidad = '1ª', pallets = '', envPallet = '', sueltos = '', aRestar = '', kg = '15') {
+    const row = document.createElement('div');
+    row.className = 'tabla-row';
+    row.style.gridTemplateColumns = '0.9fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 0.5fr 32px';
+    row.innerHTML = `
+        <input type="text" class="sal-desc" value="${desc}" placeholder="Descripción">
+        <select class="sal-calidad">
+            <option value="1ª" ${calidad==='1ª'?'selected':''}>1ª</option>
+            <option value="2ª" ${calidad==='2ª'?'selected':''}>2ª</option>
+            <option value="Industria" ${calidad==='Industria'?'selected':''}>Ind</option>
+        </select>
+        <input type="number" class="sal-pallets" value="${pallets}" placeholder="Pallets">
+        <input type="number" class="sal-envpallet" value="${envPallet}" placeholder="Env/Pal">
+        <input type="number" class="sal-sueltos" value="${sueltos}" placeholder="Suelt">
+        <input type="number" class="sal-arestar" value="${aRestar}" placeholder="Restar">
+        <input type="number" class="sal-kg" value="${kg}" placeholder="Kg/u">
+        <button type="button" class="btn-del-row">×</button>
+    `;
+    row.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calcular));
+    row.querySelector('.btn-del-row').addEventListener('click', () => { row.remove(); calcular(); });
+    salidasRowsContainer.appendChild(row);
+    calcular();
+}
+
+function addBinesSalidaRow(desc = '', calidad = '1ª', bines = '', kg = '320') {
+    const row = document.createElement('div');
+    row.className = 'bines-salida-row';
+    row.innerHTML = `
+        <input type="text" class="bs-desc" value="${desc}" placeholder="Descripción">
+        <select class="bs-calidad">
+            <option value="1ª" ${calidad==='1ª'?'selected':''}>1ª</option>
+            <option value="2ª" ${calidad==='2ª'?'selected':''}>2ª</option>
+            <option value="Industria" ${calidad==='Industria'?'selected':''}>Ind</option>
+        </select>
+        <input type="number" class="bs-bines" value="${bines}" placeholder="Bines">
+        <input type="number" class="bs-kg" value="${kg}" placeholder="Kg">
+        <button type="button" class="btn-del-row">×</button>
+    `;
+    row.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calcular));
+    row.querySelector('.btn-del-row').addEventListener('click', () => { row.remove(); calcular(); });
+    binesSalidaRowsContainer.appendChild(row);
+    calcular();
+}
+
+function addPausaRow(mins = '', razon = 'Embalado') {
+    const row = document.createElement('div');
+    row.className = 'pausa-row';
+    row.innerHTML = `
+        <input type="number" class="pausa-mins" value="${mins}" placeholder="Minutos">
+        <select class="pausa-razon">
+            <option value="Embalado" ${razon==='Embalado'?'selected':''}>Embalado</option>
+            <option value="Mantenimiento" ${razon==='Mantenimiento'?'selected':''}>Mantenimiento</option>
+            <option value="Reparación" ${razon==='Reparación'?'selected':''}>Reparación</option>
+            <option value="Demora" ${razon==='Demora'?'selected':''}>Demora</option>
+            <option value="Otro" ${razon==='Otro'?'selected':''}>Otro</option>
+        </select>
+        <button type="button" class="btn-del-row">×</button>
+    `;
+    row.querySelectorAll('input, select').forEach(el => el.addEventListener('input', calcular));
+    row.querySelector('.btn-del-row').addEventListener('click', () => { row.remove(); calcular(); });
+    pausasRowsContainer.appendChild(row);
+    calcular();
+}
+
+btnAddLote.addEventListener('click', () => addLoteRow());
+btnAddSalida.addEventListener('click', () => addSalidaRow());
+btnAddBinesSalida.addEventListener('click', () => addBinesSalidaRow());
+btnAddPausa.addEventListener('click', () => addPausaRow());
+
+function calcular() {
+    const objetivo = parseFloat(ritmoObjetivo.value) || 0;
+    const valLimpieza = parseFloat(limpiezaMins.value) || 0;
+    const valDescanso = parseFloat(descansoPrinMins.value) || 0;
+    const retardo = parseFloat(retardoMins.value) || 0;
+
+    let totalPausasExtra = 0;
+    pausasRowsContainer.querySelectorAll('.pausa-row').forEach(r => {
+        totalPausasExtra += parseFloat(r.querySelector('.pausa-mins').value) || 0;
+    });
+
+    let totalMinsTurno = 0;
+    let minsDesdeInicio = 0;
+    if (horaIni.value && horaFin.value) {
+        const [h1, m1] = horaIni.value.split(':').map(Number);
+        const [h2, m2] = horaFin.value.split(':').map(Number);
+        totalMinsTurno = Math.max(0, (h2 * 60 + m2) - (h1 * 60 + m1));
+    }
+    if (horaIni.value && horaActual.value) {
+        const [h1, m1] = horaIni.value.split(':').map(Number);
+        const [ha, ma] = horaActual.value.split(':').map(Number);
+        minsDesdeInicio = Math.max(0, (ha * 60 + ma) - (h1 * 60 + m1));
+    }
+
+    const isLimpiezaPasada = limpiezaPasada.checked;
+    const isDescansoPasado = descansoPasado.checked;
+
+    const totalDescuentosTurno = valLimpieza + valDescanso + totalPausasExtra;
+    const minsEfectivos = Math.max(0, totalMinsTurno - totalDescuentosTurno);
+    const horasEfectivas = minsEfectivos / 60;
+    const binesIdealesTurno = horasEfectivas * objetivo;
+
+    const descBrutoAplicado = isDescansoPasado ? valDescanso : 0;
+    const minsBrutoTranscurridos = Math.max(0, minsDesdeInicio - descBrutoAplicado);
+    const horasBruto = minsBrutoTranscurridos / 60;
+
+    const descNetoAplicado = (isDescansoPasado ? valDescanso : 0) + (isLimpiezaPasada ? valLimpieza : 0);
+    const minsNetoTranscurridos = Math.max(0, minsDesdeInicio - descNetoAplicado - totalPausasExtra);
+    const horasNeto = minsNetoTranscurridos / 60;
+
+    let totalBinesIngreso = 0;
+    lotesRowsContainer.querySelectorAll('.lote-row').forEach(r => {
+        totalBinesIngreso += parseFloat(r.querySelector('.lote-bines').value) || 0;
+    });
+
+    const binesVolcados = parseFloat(binesVolcadosInput.value) || 0;
+
+    let ritmoBrutoVal = 0;
+    if (binesVolcados > 0 && horasBruto > 0) {
+        ritmoBrutoVal = binesVolcados / horasBruto;
+        ritmoBrutoEstado.textContent = `${ritmoBrutoVal.toFixed(1)} bines/h`;
+    } else {
+        ritmoBrutoEstado.textContent = `- bines/h`;
+    }
+    tiempoBrutoSub.textContent = `Tiempo bruto: ${Math.floor(minsBrutoTranscurridos/60)}h ${minsBrutoTranscurridos%60}m`;
+
+    let ritmoNetoVal = 0;
+    if (binesVolcados > 0 && horasNeto > 0) {
+        ritmoNetoVal = binesVolcados / horasNeto;
+        ritmoNetoEstado.textContent = `${ritmoNetoVal.toFixed(1)} bines/h`;
+    } else {
+        ritmoNetoEstado.textContent = `- bines/h`;
+    }
+    tiempoNetoSub.textContent = `Tiempo neto: ${Math.floor(minsNetoTranscurridos/60)}h ${minsNetoTranscurridos%60}m`;
+    globalRitmoNetoTxt = ritmoNetoEstado.textContent;
+
+    let binesProyectadosFin = 0;
+    if (modoBalance.value === 'neto' && ritmoNetoVal > 0) {
+        binesProyectadosFin = binesVolcados + (ritmoNetoVal * (minsEfectivos / 60 - horasNeto));
+    } else if (modoBalance.value === 'bruto' && ritmoBrutoVal > 0) {
+        binesProyectadosFin = binesVolcados + (ritmoBrutoVal * (minsEfectivos / 60 - horasBruto));
+    } else {
+        binesProyectadosFin = binesIdealesTurno;
+    }
+    const binesSobrantesAlFinal = totalBinesIngreso - Math.round(binesProyectadosFin);
+
+    if (totalBinesIngreso > 0) {
+        if (binesSobrantesAlFinal > 0) {
+            balanceTurnoEl.textContent = `Sobran: ${binesSobrantesAlFinal} bines en stock`;
+            balanceTurnoEl.style.color = 'var(--orange)';
+        } else {
+            balanceTurnoEl.textContent = `Alcanza y sobran ${Math.abs(binesSobrantesAlFinal)} bines de margen`;
+            balanceTurnoEl.style.color = 'var(--green-dark)';
+        }
+    } else {
+        balanceTurnoEl.textContent = `Ingrese lotes de fruta`;
+        balanceTurnoEl.style.color = 'var(--muted)';
+    }
+
+    detalleTurnoEl.textContent = `Efectivo: ${Math.floor(minsEfectivos/60)}h ${minsEfectivos%60}m (Proyectado: ${Math.round(binesProyectadosFin)} bines)`;
+
+    const binesRestantesPorVolcar = Math.max(0, totalBinesIngreso - binesVolcados);
+    let velocidadParaEstimar = objetivo;
+    if (modoEstimacion.value === 'neto' && ritmoNetoVal > 0) velocidadParaEstimar = ritmoNetoVal;
+    else if (modoEstimacion.value === 'bruto' && ritmoBrutoVal > 0) velocidadParaEstimar = ritmoBrutoVal;
+    
+    if (binesRestantesPorVolcar > 0 && velocidadParaEstimar > 0 && horaActual.value) {
+        const horasFaltantes = binesRestantesPorVolcar / velocidadParaEstimar;
+        const [hAct, mAct] = horaActual.value.split(':').map(Number);
+        let totalMinsActuales = hAct * 60 + mAct + Math.round(horasFaltantes * 60);
+        
+        let finalH = Math.floor(totalMinsActuales / 60) % 24;
+        let finalM = totalMinsActuales % 60;
+        horaFinEstimadaEl.textContent = `${String(finalH).padStart(2,'0')}:${String(finalM).padStart(2,'0')} hs`;
+        detalleFinEstimadoEl.textContent = `Faltan ${binesRestantesPorVolcar} bines (~${Math.round(horasFaltantes * 60)} min)`;
+    } else if (totalBinesIngreso > 0 && binesRestantesPorVolcar === 0) {
+        horaFinEstimadaEl.textContent = `¡Lote completado!`;
+        detalleFinEstimadoEl.textContent = `Se terminaron de volcar todos los bines`;
+    } else {
+        horaFinEstimadaEl.textContent = `--:-- hs`;
+        detalleFinEstimadoEl.textContent = `Ingrese bines en lotes y hora actual`;
+    }
+
+    let kg1 = 0, kg2 = 0, kgInd = 0;
+    let descPorCalidad = { '1ª': {}, '2ª': {}, 'Industria': {} };
+
+    salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
+        const desc = r.querySelector('.sal-desc').value.trim() || 'Sin desc';
+        const pallets = parseFloat(r.querySelector('.sal-pallets').value) || 0;
+        const envPallet = parseFloat(r.querySelector('.sal-envpallet').value) || 0;
+        const sueltos = parseFloat(r.querySelector('.sal-sueltos').value) || 0;
+        const aRestar = parseFloat(r.querySelector('.sal-arestar').value) || 0;
+        const kgU = parseFloat(r.querySelector('.sal-kg').value) || 0;
+        const cal = r.querySelector('.sal-calidad').value;
+        
+        let totalEnvasesNeto = Math.max(0, ((pallets * envPallet) + sueltos) - aRestar);
+        let totalKg = totalEnvasesNeto * kgU;
+
+        if (cal === '1ª') kg1 += totalKg;
+        else if (cal === '2ª') kg2 += totalKg;
+        else if (cal === 'Industria') kgInd += totalKg;
+
+        if (!descPorCalidad[cal][desc]) descPorCalidad[cal][desc] = 0;
+        descPorCalidad[cal][desc] += totalKg;
+    });
+
+    binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
+        const desc = r.querySelector('.bs-desc').value.trim() || 'Sin desc';
+        const cal = r.querySelector('.bs-calidad').value;
+        const b = parseFloat(r.querySelector('.bs-bines').value) || 0;
+        const kAprox = parseFloat(r.querySelector('.bs-kg').value) || 320;
+        let totalKgBin = b * kAprox;
+        
+        if (cal === '1ª') kg1 += totalKgBin;
+        else if (cal === '2ª') kg2 += totalKgBin;
+        else if (cal === 'Industria') kgInd += totalKgBin;
+
+        if (!descPorCalidad[cal][desc]) descPorCalidad[cal][desc] = 0;
+        descPorCalidad[cal][desc] += totalKgBin;
+    });
+
+    const pBin = parseFloat(pesoBin.value) || 330;
+    const binesVolcadosParaRendimiento = Math.max(0, binesVolcados - (retardo / 60) * objetivo);
+    const totalKgVolcados = binesVolcadosParaRendimiento * pBin;
+
+    let r1 = totalKgVolcados > 0 ? (kg1 / totalKgVolcados) * 100 : 0;
+    let r2 = totalKgVolcados > 0 ? (kg2 / totalKgVolcados) * 100 : 0;
+    let rInd = totalKgVolcados > 0 ? (kgInd / totalKgVolcados) * 100 : 0;
+    let rendimientoTotal = r1 + r2 + rInd;
+    let merma = Math.max(0, 100 - rendimientoTotal);
+
+    rendimientoDesglosadoEl.textContent = `1ª: ${r1.toFixed(1)}% | 2ª: ${r2.toFixed(1)}% | Ind: ${rInd.toFixed(1)}% | Merma: ${merma.toFixed(1)}%`;
+    globalRendimientoTxt = rendimientoDesglosadoEl.textContent;
+    baseEmpacablesEl.textContent = `Base cálculo (con retardo): ${(totalKgVolcados/1000).toFixed(2)} t`;
+
+    let htmlDesglose = [];
+    let totalKgGlobal = totalKgVolcados > 0 ? totalKgVolcados : (kg1 + kg2 + kgInd);
+
+    if (kg1 > 0) {
+        let pctCal1 = totalKgGlobal > 0 ? (kg1 / totalKgGlobal) * 100 : 0;
+        htmlDesglose.push(`<b>1ª (${pctCal1.toFixed(1)}%):</b>`);
+        for (let prod in descPorCalidad['1ª']) {
+            let kgProd = descPorCalidad['1ª'][prod];
+            let pctProd = totalKgGlobal > 0 ? (kgProd / totalKgGlobal) * 100 : 0;
+            htmlDesglose.push(`&nbsp;&nbsp;• ${prod}: ${pctProd.toFixed(1)}%`);
+        }
+    }
+
+    if (kg2 > 0) {
+        let pctCal2 = totalKgGlobal > 0 ? (kg2 / totalKgGlobal) * 100 : 0;
+        htmlDesglose.push(`<b>2ª (${pctCal2.toFixed(1)}%):</b>`);
+        for (let prod in descPorCalidad['2ª']) {
+            let kgProd = descPorCalidad['2ª'][prod];
+            let pctProd = totalKgGlobal > 0 ? (kgProd / totalKgGlobal) * 100 : 0;
+            htmlDesglose.push(`&nbsp;&nbsp;• ${prod}: ${pctProd.toFixed(1)}%`);
+        }
+    }
+
+    if (kgInd > 0) {
+        let pctCalInd = totalKgGlobal > 0 ? (kgInd / totalKgGlobal) * 100 : 0;
+        htmlDesglose.push(`<b>Industria (${pctCalInd.toFixed(1)}%):</b>`);
+        for (let prod in descPorCalidad['Industria']) {
+            let kgProd = descPorCalidad['Industria'][prod];
+            let pctProd = totalKgGlobal > 0 ? (kgProd / totalKgGlobal) * 100 : 0;
+            htmlDesglose.push(`&nbsp;&nbsp;• ${prod}: ${pctProd.toFixed(1)}%`);
+        }
+    }
+
+    if (merma > 0) {
+        htmlDesglose.push(`<b>Merma (${merma.toFixed(1)}%):</b> Fruta no recuperada`);
+    }
+
+    detallePorDescEl.innerHTML = htmlDesglose.length > 0 ? htmlDesglose.join('<br>') : 'Sin salidas cargadas';
+
+    const toneladas = totalKgVolcados / 1000;
+    const cIni = parseFloat(ceraIni.value) || 0;
+    const cFin = parseFloat(ceraFin.value) || 0;
+    const jIni = parseFloat(jabonIni.value) || 0;
+    const jFin = parseFloat(jabonFin.value) || 0;
+
+    const consumoCera = toneladas > 0 ? Math.max(0, cIni - cFin) / toneladas : 0;
+    const consumoJabon = toneladas > 0 ? Math.max(0, jIni - jFin) / toneladas : 0;
+
+    consumoCeraEl.textContent = consumoCera.toFixed(2);
+    consumoJabonEl.textContent = consumoJabon.toFixed(2);
+}
+
+[ritmoObjetivo, pesoBin, horaIni, horaActual, horaFin, limpiezaMins, limpiezaPasada, descansoPrinMins, descansoPasado, retardoMins, modoBalance, modoEstimacion, binesVolcadosInput, ceraIni, ceraFin, jabonIni, jabonFin].forEach(el => {
+    if(el) el.addEventListener('input', calcular);
+    if(el) el.addEventListener('change', calcular);
+});
+
+btnClear.addEventListener('click', () => {
+    document.querySelectorAll('input').forEach(i => { if(i.type !== 'time' && i.type !== 'date' && i.type !== 'checkbox') i.value = ''; });
+    ritmoObjetivo.value = '30';
+    pesoBin.value = '330';
+    horaIni.value = '08:40';
+    ponerHoraActual();
+    horaFin.value = '14:00';
+    limpiezaMins.value = '30';
+    limpiezaPasada.checked = false;
+    descansoPrinMins.value = '30';
+    descansoPasado.checked = true;
+    retardoMins.value = '10';
+    lotesRowsContainer.innerHTML = '';
+    salidasRowsContainer.innerHTML = '';
+    binesSalidaRowsContainer.innerHTML = '';
+    pausasRowsContainer.innerHTML = '';
+    calcular();
+});
+
+btnWsp.addEventListener('click', () => {
+    const textoWsp = `*🍊 El Paruco - Control de Volcado e Insumos*
+- Hora Actual: ${horaActual.value || '--:--'}
+- Bines volcados: ${binesVolcadosInput.value || 0}
+- Ritmo Neto: ${globalRitmoNetoTxt || '- bines/h'}
+- Fin estimado de lote: ${horaFinEstimadaEl.textContent}
+- Rendimiento y Merma: ${globalRendimientoTxt || '1ª: 0.0% | 2ª: 0.0% | Ind: 0.0% | Merma: 0.0%'}
+- Consumo Cera: ${consumoCeraEl.textContent} L/t
+- Consumo Jabón: ${consumoJabonEl.textContent} L/t`;
+    
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textoWsp)}`, '_blank');
+});
+
+btnPdf.addEventListener('click', () => {
+    window.print();
+});
+
+cargarSelectorStock();
+calcular();
+</script>
+</body>
+</html>
