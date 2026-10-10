@@ -207,12 +207,12 @@ input, select{width:100%;padding:8px;background:#fdfdfd;border:1.5px solid var(-
 
 <button type="button" class="btn-wsp" id="btnWsp">📱 Compartir por WhatsApp</button>
 <button type="button" class="btn-pdf" id="btnPdf">📄 Exportar / Guardar PDF</button>
-<button type="button" class="btn-sheet" id="btnSheet">☁️ Guardar Reporte en Excel</button>
+<button type="button" class="btn-sheet" id="btnSheet">☁️ Guardar Reporte Completo en Excel</button>
 <button type="button" class="btn-clear" id="btnClear">🗑️ Limpiar campos / Nuevo Lote</button>
 </div>
 
 <script>
-const URL_WEBAPP = "https://script.google.com/macros/s/AKfycbzAnPEK4hOmIZBu61730yiamGKeA9tWi-Z4njEpmdrgY2Ld6fvCEYiSb04EUq_tTxDz/exec";
+const URL_WEBAPP = "https://script.google.com/macros/s/AKfycbxuFInj9ElpNNPhVZ51Z3MjKkw88TniSa4KMQ5Y6jrYdxoQOTvjj59cDOK7jzhbXCME/exec";
 
 const ritmoObjetivo = document.getElementById('ritmoObjetivo');
 const pesoBin = document.getElementById('pesoBin');
@@ -671,25 +671,82 @@ btnPdf.addEventListener('click', () => {
 });
 
 btnSheet.addEventListener('click', () => {
-    const reporte = {
+    // Recolectar lotes cargados
+    let lotesData = [];
+    lotesRowsContainer.querySelectorAll('.lote-row').forEach(r => {
+        lotesData.push({
+            quinta: r.querySelector('.lote-quinta').value,
+            lote: r.querySelector('.lote-numero').value,
+            variedad: r.querySelector('.lote-variedad').value,
+            bines: r.querySelector('.lote-bines').value,
+            fecha: r.querySelector('.lote-fecha').value,
+            remito: r.querySelector('.lote-remito').value
+        });
+    });
+
+    // Recolectar salidas de envases
+    let salidasData = [];
+    salidasRowsContainer.querySelectorAll('.tabla-row').forEach(r => {
+        salidasData.push({
+            desc: r.querySelector('.sal-desc').value,
+            calidad: r.querySelector('.sal-calidad').value,
+            pallets: r.querySelector('.sal-pallets').value,
+            envPallet: r.querySelector('.sal-envpallet').value,
+            sueltos: r.querySelector('.sal-sueltos').value,
+            aRestar: r.querySelector('.sal-arestar').value,
+            kg: r.querySelector('.sal-kg').value
+        });
+    });
+
+    // Recolectar bines de salida
+    let binesSalidaData = [];
+    binesSalidaRowsContainer.querySelectorAll('.bines-salida-row').forEach(r => {
+        binesSalidaData.push({
+            desc: r.querySelector('.bs-desc').value,
+            calidad: r.querySelector('.bs-calidad').value,
+            bines: r.querySelector('.bs-bines').value,
+            kg: r.querySelector('.bs-kg').value
+        });
+    });
+
+    // Recolectar pausas
+    let pausasData = [];
+    pausasRowsContainer.querySelectorAll('.pausa-row').forEach(r => {
+        pausasData.push({
+            mins: r.querySelector('.pausa-mins').value,
+            razon: r.querySelector('.pausa-razon').value
+        });
+    });
+
+    const reporteCompleto = {
         fecha: new Date().toLocaleDateString(),
         hora: horaActual.value || '--:--',
+        velocidadObj: ritmoObjetivo.value,
+        pesoBin: pesoBin.value,
+        horaIni: horaIni.value,
+        horaFin: horaFin.value,
+        binesVolcados: binesVolcadosInput.value || 0,
+        ritmoBruto: ritmoBrutoEstado.textContent,
         ritmoNeto: globalRitmoNetoTxt || '- bines/h',
-        bines: binesVolcadosInput.value || 0,
+        balance: balanceTurnoEl.textContent,
         finEstimado: horaFinEstimadaEl.textContent || '--:--',
         rendimiento: globalRendimientoTxt || 'Sin datos',
         cera: consumoCeraEl.textContent || '0.00',
-        jabon: consumoJabonEl.textContent || '0.00'
+        jabon: consumoJabonEl.textContent || '0.00',
+        lotes: lotesData,
+        salidasEnvases: salidasData,
+        binesSalida: binesSalidaData,
+        pausas: pausasData
     };
 
     fetch(URL_WEBAPP, {
         method: "POST",
         mode: "no-cors",
         headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ tipo: "Volcados", info: reporte })
+        body: JSON.stringify({ tipo: "Volcados", info: reporteCompleto })
     })
     .then(() => {
-        alert('¡Reporte de volcado guardado en Google Sheets con éxito!');
+        alert('¡Reporte completo guardado en Google Sheets con éxito!');
     })
     .catch(err => {
         alert('Error al guardar en la nube: ' + err);
