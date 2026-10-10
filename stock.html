@@ -396,7 +396,7 @@ function poblarSelectLotes(selectId, modo = 'stock') {
 }
 
 function sincronizarGoogleSheets() {
-    const urlWebapp = "https://script.google.com/macros/s/AKfycbz70n3ojY4N1O1afk2j4MMawcDFuNFfZdMm-_a_N88AxdzfZHhVKBcXG6HmlL7zIH3Y/exec";
+    const urlWebapp = "https://script.google.com/macros/s/AKfycbxAUMysz8leggpmamDv-icLBD4n-ZLHaeZWoOeqWc7PvGV5FRQqBiXc6lC35JcafC5u/exec"; // <-- Tu URL de Apps Script va acá entre comillas
     
     let ingresos = obtenerIngresos();
     let salidas = obtenerSalidas();
@@ -407,29 +407,20 @@ function sincronizarGoogleSheets() {
         return;
     }
 
-    // Método infalible con formulario oculto para saltar restricciones de CORS
-    function enviarDatos(tipo, info) {
-        let form = document.createElement('form');
-        form.method = 'POST';
-        form.action = urlWebapp;
-        form.target = '_blank'; // Abre una micro pestaña invisible o se ejecuta en segundo plano
-
-        let input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'data';
-        input.value = JSON.stringify({ tipo: tipo, info: info });
-        
-        form.appendChild(input);
-        document.body.appendChild(form);
-        form.submit();
-        document.body.removeChild(form);
+    function enviar(tipoHoja, info) {
+        fetch(urlWebapp, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain" },
+            body: JSON.stringify({ tipo: tipoHoja, info: info })
+        });
     }
 
-    ingresos.forEach(i => enviarDatos("ingreso", i));
-    salidas.forEach(s => enviarDatos("salida", s));
-    movimientos.forEach(m => enviarDatos("movimiento", m));
+    ingresos.forEach(i => enviar("Ingresos", i));
+    salidas.forEach(s => enviar("Salidas", s));
+    movimientos.forEach(m => enviar("Movimientos", m));
 
-    alert('¡Sincronización enviada a Google Sheets con éxito!');
+    alert('¡Sincronización enviada a Google Sheets!');
 }
 
 renderStockPlaya();
